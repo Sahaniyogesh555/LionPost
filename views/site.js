@@ -587,8 +587,8 @@ export function videosIndex({ user, videos, flash }) {
     body: html`
 <section class="tool-hero"><div class="shell">
   <span class="eyebrow">The shelf</span>
-  <h1>Thirty-five seconds, one idea.</h1>
-  <p class="lede">Every clip here is a script the studio wrote and the browser rendered. Click one to play it: the player draws each scene on a canvas, so nothing is streamed and nothing is stored.</p>
+  <h1>Under a minute, one idea.</h1>
+  <p class="lede">Four short clips, each one argument. Every one is a script the studio wrote and the browser rendered: click to play and the player draws each scene on a canvas, so nothing is streamed and nothing is stored.</p>
   <div class="row"><a class="btn" href="/app/videos">${icon('video', 16)} Make one</a><a class="btn ghost" href="/tools/ai-video-maker">How the tool works</a></div>
 </div></section>
 <section class="section tight"><div class="shell">
