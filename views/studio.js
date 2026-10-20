@@ -65,7 +65,7 @@ export function aeoPage({ user, csrf, report, history, unread, flash }) {
     <label class="field"><span class="field-label">Page URL</span><input name="url" placeholder="https://your-site.com/article" value="${report?.url || ''}"></label>
     <label class="field"><span class="field-label">…or paste the HTML</span><input name="pasted" placeholder="Paste HTML when a site blocks bots" value=""></label>
   </div>
-  <div class="row"><button class="btn" type="submit">${icon('shield', 15)} Run the 18 checks</button><span class="dim small">No API key. Reads the page, robots.txt and llms.txt.</span></div>
+  <div class="row"><button class="btn" type="submit">${icon('shield', 15)} Run the 18 checks</button><span class="dim small" data-aeo-note>No API key. Reads the page, robots.txt and llms.txt.</span></div>
 </form>
 
 ${report ? html`

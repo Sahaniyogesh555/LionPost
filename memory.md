@@ -5,152 +5,124 @@ what is done, what was decided and why, what is broken, what is next.
 
 Last updated: 2026-10-20
 Branch: `arena/e59b6511-lionpost`
-Repo state: clean, two commits, `7a3a052` pushed to origin.
+State: clean tree, three commits, tip pushed to origin.
 
 ---
 
 ## 1. Progress
 
-### Done: Replica skill pack installed
+### Done: LionPost is a working product
 
-| Item | Detail |
+The source product (named in `replica/provenance.md` only) rebuilt clean-room:
+its marketing site, sixteen tools and the app behind them, rebranded as
+LionPost on a gold-and-ink palette. No dependencies, no build step, `node:sqlite` for storage.
+
+| Area | State |
 | --- | --- |
-| Source | `https://github.com/Jakeschincariol/replica-skill` |
-| Version | v1.0.0, commit `77c9436`, dated 2026-10-03 |
-| Licence | MIT, (c) 2026 Jake Schincariol, `LICENSE` copied alongside |
-| Skills | 11 folders, 29 tracked files, ~200 KB |
-| Project copy | `LionPost/.claude/skills/` (committed, travels with the repo) |
-| Global copy | `~/.claude/skills/` (outside git, same 11 folders + LICENSE) |
-| Commit | `7a3a052` "Install Replica skill pack (11 skills) into .claude/skills" |
-| Push | `origin/arena/e59b6511-lionpost`, branch created by this push |
+| Marketing | landing with live counters, 16 tool pages, blog + structured data, about, terms, privacy, robots/sitemap/feed/llms |
+| Accounts | register, login, logout, password reset, sessions, CSRF, throttles |
+| Workspace | dashboard, composer (6 formats), drafts, keywords, AEO, video, carousel, pin, shorts, settings, notifications |
+| Automations | connections + AES-256-GCM vault, feeds, schedules, worker, dry/live runs, run log, audit |
+| Community | categories, threads, comments, likes, pins, locks, tags, search, profiles, moderator tools |
+| Client media | canvas carousel → PNG, `MediaRecorder` video/shorts → WebM, SRT shift + translate |
 
-Skills: `replica-recon`, `replica-architect`, `replica-design`, `replica-build`,
-`replica-backend`, `replica-test`, `replica-diff`, `replica-entrepreneur`,
-`replica-brand`, `replica-launch`, `replica-deploy`.
+Measured on the seeded content: **AEO 89/100** on the first blog post (the
+only failed check is HTTPS, which cannot pass on a local server), **parity
+100/100** over 45 counted features, **contrast 20/20 token pairs at AA**,
+**rebrand sweep clean**.
 
-Bundled tools (standard library Python, no network): `parity.py`,
-`imgdiff.py`, `reviews.py`, `contrast.py`, `sweep.py`, `listing.py`.
+### Done: Replica skill pack installed (earlier commit)
 
-### Done: repo housekeeping
+Source `https://github.com/Jakeschincariol/replica-skill`, v1.0.0, commit
+`77c9436`, MIT © Jake Schincariol. Vendored into `.claude/skills/` (11 skills,
+6 stdlib Python tools) plus a local README with provenance. Upstream tests
+ran green (57/57) from a throwaway clone; they are not vendored (D4 below).
 
-- Added `.claude/skills/README.md`: provenance, pinned commit, pipeline order,
-  tool commands, fine print.
-- Added root `.gitignore`: `__pycache__/`, `*.py[cod]`, `.venv/`, `.DS_Store`.
-- Verified installed tree is byte-identical to upstream (11/11 folders).
-- Verified upstream test suite: 57 tests, all pass.
-- Exercised all six tools by hand; results in `testing.md`.
+### Not done
 
-### Not started
-
-- No `replica/` working folder yet. Nothing has been reverse-engineered.
-- LionPost itself is still just a README (`# LionPost`). No app, no stack.
+- No browser in the sandbox, so the canvas/`MediaRecorder` paths are verified
+  by wiring tests, not by clicking. `tests/wiring.test.js` proves every id,
+  data attribute and script the client code asks for exists in the markup.
+- Live posting to Instagram/Facebook/X/Pinterest/TikTok/YouTube/Dailymotion
+  needs app credentials; the adapters refuse with that reason instead of
+  faking a success.
+- No CI pipeline yet.
 
 ---
 
 ## 2. Decisions
 
-**D1. Vendor into `.claude/skills/` instead of using the plugin marketplace.**
-The README's plugin route (`/plugin marketplace add ...`) needs Claude Code
-with plugin support. This environment has no `claude` CLI, and the repo needs
-to be reproducible for anyone who clones it. Copying the folders is the
-route upstream documents for exactly this case.
+**D1. One process, zero dependencies.** `node:sqlite` is enough for the data
+model, and the HTML is rendered on the server. That keeps the checkout
+runnable with `node server.js` and makes the tests fast. A framework would add
+a toolchain without adding a feature.
 
-**D2. Install both project-local and global.**
-Project-local is the source of truth and is versioned. The global copy makes
-the skills usable from any directory in this sandbox. Consequence: two copies
-to keep in sync. Refresh both when upstream moves.
+**D2. Clean-room, with provenance.** `replica/recon.md` records what the
+original does, page by page. Code, copy, palette, logo and seed content are
+original. `replica/brand.json` + `sweep.py` enforce it; parity is tracked
+feature by feature in `replica/features.csv`.
 
-**D3. Pin to `77c9436`, do not track `main`.**
-Upstream has a single commit and no tags. Vendoring the exact tree means a
-clone of this repo behaves the same next month. Upgrading is a deliberate
-re-copy plus a re-run of the test suite, not a silent drift.
+**D3. Simulate the unreachable seams, never the outcomes.** Content generation
+is a deterministic local engine, mail prints to the log, and each social
+adapter explains what is missing. Webhooks and Telegram are real — they leave
+the process.
 
-**D4. Do not vendor upstream's `tests/` directory.**
-The tests validate the skill pack, not LionPost. Keeping 57 tests and the
-fixtures in the repo would imply they gate our app. They were run against a
-throwaway clone in `/tmp`; the results are recorded in `testing.md`. If we
-later want CI coverage of the tools, add the suite back under
-`.claude/skills/tests/` and wire it up properly.
+**D4. Do not vendor the skill pack's own tests.** They validate the pack, not
+LionPost; results are in `testing.md`. Add them back only if the Python tools
+become part of CI.
 
-**D5. Commit the `.gitignore` with the install.**
-The first pass picked up `__pycache__/*.pyc` from the smoke tests. Bytecode is
-build output, not source. Ignoring it, then amending the commit to drop the
-six tracked `.pyc` files, keeps the tree to 29 real files.
+**D5. Free means free.** No pricing page, no upgrade path, no card. The
+original's promise is part of the product, so the replica keeps it.
 
-**D6. Add our own `README.md` inside `.claude/skills/`.**
-Upstream's README is written for the whole skill pack as a standalone product.
-A local readme that states source, commit, licence and the pipeline order is
-what someone browsing this repo actually needs.
-
-**D7. Treat the skills as instructions, not as installed software.**
-Each `SKILL.md` is prose that a model follows. There is no executable entry
-point beyond the six Python scripts. Invoking a skill here means reading the
-matching `SKILL.md` and following it, not calling a slash command.
+**D6. Starter content instead of blank canvases.** A cold visit to the
+carousel or video screen builds an unsaved starter so the canvas, download and
+playback controls work on first paint. Saved-deck lists stay honest.
 
 ---
 
 ## 3. Bugs, issues and gotchas
 
-### B1. Bytecode leaked into the first commit (fixed)
-`python3` writes `__pycache__` next to the scripts during smoke tests, and
-`git add .claude` picked it up: 6 `.pyc` files in the initial commit.
-Fixed by adding `.gitignore`, `git rm --cached` on the compiled files and
-amending. Current state: 0 tracked `.pyc`, 0 `__pycache__` directories.
-Worth remembering: run tools with `PYTHONDONTWRITEBYTECODE=1` when testing
-inside the repo.
+**B1. A view helper that drops its `body` renders a blank page with status
+200.** Happened twice: `shell()` dropping `opts.body`, and `appPage()` missing
+a `canonical` parameter. Both produced 200s with empty `<main>`. Lesson: smoke
+tests must assert on page text, not on status or byte size.
 
-### B2. No `claude` CLI in this environment (limitation, not fixable here)
-`command -v claude` returns nothing. The documented `/replica-recon` style
-commands therefore do not exist in this sandbox. Workaround is D7: name the
-skill, load `SKILL.md`, follow it.
+**B2. CSRF cookie is cleared at login.** Read `lion_csrf` *after* the redirect
+lands (`GET /app`), never from the login response. Tests do this in
+`makeClient.login()`.
 
-### B3. `sweep.py` is silent about colours unless you pass them
-Running `sweep.py <dir> --avoid "Original App"` reports "Clean" even when the
-target's brand hex is sitting in the source. Colour scanning only engages with
-`--colors "#ff5a5f"` or a `--config` JSON that lists `colors`. First observed
-on a fixture containing `#FF5A5F`; re-ran with `--colors` and it correctly
-reported `1 hits (color 1)` and exited 1. Not an upstream defect, but a sharp
-edge: "Clean" means "clean of the things you told it to look for".
+**B3. Webhooks arrive without a CSRF token.** `/api/echo` is the only exempt
+POST; anything else that posts machine-to-machine needs the same treatment.
 
-### B4. `listing.py` flags the shipped example's own copy
-The example listing at `replica-launch/listing.example.json` produces
-`0 errors, 1 warnings`: `'free' reads as a ranking or price claim` in the
-Google Play short description. The tool is right and the example text is the
-thing to fix. Keep the warning in mind when writing LionPost's listing.
+**B4. Relative webhook paths need a base.** `deliver()` resolves `/api/echo`
+against `LIONPOST_URL` (tests set it) or `127.0.0.1:$PORT`.
 
-### B5. Bad fixture, not a bad tool (resolved, no action)
-The first `imgdiff` run failed with
-`imgdiff: [Errno 2] No such file or directory: '/tmp/moved.png'`. Cause was my
-own fixture generator raising before it wrote the file. Rebuilt the fixture
-and the tool behaved correctly. Recorded so nobody re-investigates it.
+**B5. A second connection for the same platform is a 409 by design.** Tests
+delete or replace the seeded webhook first.
 
-### B6. `reviews.py` refuses an empty input rather than printing an empty table
-Exit code 2, message on stderr:
-`reviews: no usable rows. Every row needs a url (http...) and the review text.`
-Correct behaviour, but scripts calling it need to handle a non-zero exit on
-empty data.
+**B6. Script and asset paths are `/assets/js/*`, not `/js/*`.** A missing
+`tools-app.js` shipped a 404 script tag on two app pages; the wiring test now
+catches it.
 
-### B7. Tool exit codes are meaningful and must be respected
-`sweep.py` and `listing.py` return 1 on findings, `parity.py` returns 0 even
-at 0/100, `imgdiff --fail-under` returns 1 below threshold, bad input returns
-2 with a message. The deploy preflight depends on these, so any wrapper must
-propagate them instead of swallowing them.
+**B7. Seeded `/u/demo` was a dead link.** Handles are derived from names
+(`demo@` → `alex`). Footer now links the signed-in handle.
+
+**B8. Skill-pack sharp edges.** `sweep.py` only looks for colours you pass;
+`parity.py` exits 0 even at 0/100; `listing.py`/`sweep.py` exit 1 on findings,
+2 on bad input. Run with `PYTHONDONTWRITEBYTECODE=1`.
 
 ---
 
 ## 4. Next steps
 
-1. **Pick the target app and run recon.** `/replica-recon` equivalent: point
-   the skill at the app's URL plus our own account screenshots. Output lands
-   in `replica/recon.md`, `replica/features.csv`.
-2. **Create `replica/` and commit its `.gitkeep`.** Give the pipeline a home
-   before the first run so nothing gets written to a stray path.
-3. **Decide scope before building.** `replica-recon` sizes the job honestly;
-   record the in-scope and out-of-scope lists in `memory.md` when it lands.
-4. **Consider a light CI job.** 57 upstream tests plus `sweep.py` on our own
-   source would catch a rebrand regression on every push. Requires vendoring
-   `tests/` (see D4).
-5. **Refresh policy every few months.** Store character limits and copycat
-   rules encoded in `listing.py` can go stale; re-check before a real launch.
-6. **Keep `~/.claude/skills` in sync** with the project copy, or drop the
-   global copy if it starts drifting.
+1. **Browser pass.** With a real browser, click: carousel PNG export, video
+   record + download, shorts capture, studio AJAX, keyword copy, mobile nav.
+   Everything is wired; nothing has been clicked.
+2. **Real model behind the composer.** `lib/generator.js` is deliberately one
+   function per format. Replace bodies, keep signatures.
+3. **OAuth adapters.** `deliver()` in `lib/scheduler.js` is the only seam per
+   platform; webhook and Telegram show the shape.
+4. **Optional: contrast/parity in CI.** Both tools are deterministic and
+   fast; a push gate would catch palette and feature drift.
+5. **Refresh policy every few months.** Character limits and platform rules
+   encoded in `lib/tools.js` age.

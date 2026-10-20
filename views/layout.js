@@ -76,7 +76,7 @@ export function sitePage({ title, description, user, active = '', body, scripts 
       <div class="footer-tags"><span>${icon('shield', 14)} Encrypted keys</span><span>${icon('bolt', 14)} 16 tools</span></div>
     </div>
     <div><h4>Product</h4><a href="/tools">All tools</a><a href="/app/studio">Studio</a><a href="/app/automations">Automations</a><a href="/app/keywords">Keyword research</a></div>
-    <div><h4>Community</h4><a href="/community">The Lounge</a><a href="/community/category/questions">Questions</a><a href="/community/category/showcase">Showcase</a><a href="/u/demo">Your profile</a></div>
+    <div><h4>Community</h4><a href="/community">The Lounge</a><a href="/community/category/questions">Questions</a><a href="/community/category/showcase">Showcase</a><a href="${user ? `/u/${user.handle}` : '/register'}">Your profile</a></div>
     <div><h4>Company</h4><a href="/blog">Blog</a><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></div>
   </div>
   <div class="shell footer-bottom">

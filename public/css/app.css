@@ -587,3 +587,12 @@ table.data tbody tr:hover { background: rgba(255,255,255,.018); }
 .error-body { display: grid; place-items: center; min-height: 100vh; background: radial-gradient(600px 400px at 50% 0, rgba(245,185,66,.12), transparent), var(--ink); }
 .error-wrap { text-align: center; display: grid; gap: 10px; justify-items: center; max-width: 460px; padding: 30px; }
 .error-wrap h1 { font-size: 28px; }
+
+/* small inline toast for copy actions */
+.toast-inline {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 16px);
+  background: #1b2030; border: 1px solid var(--line-2); color: var(--text);
+  padding: 9px 15px; border-radius: 10px; font-size: 13px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 90;
+}
+.toast-inline.show { opacity: 1; transform: translate(-50%, 0); }

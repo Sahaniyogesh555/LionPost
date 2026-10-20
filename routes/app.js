@@ -393,6 +393,10 @@ export function appRoutes() {
       const row = ctx.db.prepare('SELECT * FROM videos WHERE id = ? AND user_id = ?').get(Number(ctx.query.id), user.id);
       if (row) video = { ...row, scenes: JSON.parse(row.scenes) };
     }
+    if (!video) {
+      const script = generate('video', { topic: 'The half of publishing nobody films', tone: 'practical' });
+      video = { id: null, title: script.title, topic: script.topic || 'The half of publishing nobody films', scenes: script.scenes, starter: true };
+    }
     const videos = ctx.db.prepare('SELECT id,title,created_at FROM videos WHERE user_id = ? ORDER BY created_at DESC LIMIT 8').all(user.id);
     ctx.html(String(videosPage({ user, csrf: ctx.csrf, video, videos, unread: unreadFor(ctx.db, user.id), flash: takeFlash(ctx) })));
   });
@@ -409,6 +413,24 @@ export function appRoutes() {
     ctx.redirect(`/app/videos?id=${info.lastInsertRowid}`);
   });
 
+  // The carousel screen is a live canvas, so it always carries a deck. A cold
+  // visit gets a starter built from the member's newest automation topic; it is
+  // rendered but never saved, and the saved-decks list stays honest.
+  const buildDeck = (format, topic, handle, palette) => {
+    const script = generate(format === 'pin' ? 'pin' : 'carousel', { topic });
+    const slides = format === 'pin'
+      ? [{ kicker: 'PIN', title: script.title, body: script.description }, ...script.overlay.lines.map((l, i) => ({ kicker: `0${i + 1}`, title: l.split(':')[0], body: l }))]
+      : script.slides;
+    return { format, topic, handle, palette, slides };
+  };
+
+  const starterDeck = (db, user, format) => {
+    const row = db.prepare("SELECT topic FROM automations WHERE user_id = ? AND topic <> '' ORDER BY created_at DESC LIMIT 1").get(user.id)
+      || db.prepare('SELECT title AS topic FROM articles WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(user.id);
+    const topic = (row && row.topic) || 'A queue that runs while you sleep';
+    return { ...buildDeck(format, topic, '@' + user.handle, 'gold'), starter: true, id: null };
+  };
+
   r.get('/app/carousel', (ctx) => {
     const user = requireUser(ctx);
     const tab = ['carousel', 'pin', 'quote'].includes(ctx.query.tab) ? ctx.query.tab : 'carousel';
@@ -417,6 +439,7 @@ export function appRoutes() {
       const row = ctx.db.prepare('SELECT * FROM decks WHERE id = ? AND user_id = ?').get(Number(ctx.query.id), user.id);
       if (row) deck = { ...row, slides: JSON.parse(row.slides) };
     }
+    if (!deck) deck = starterDeck(ctx.db, user, tab);
     const decks = ctx.db.prepare('SELECT d.id,d.topic,d.format,d.created_at,(SELECT 1) AS slides FROM decks d WHERE d.user_id = ? ORDER BY d.created_at DESC LIMIT 8').all(user.id)
       .map((d) => ({ ...d, slides: JSON.parse(ctx.db.prepare('SELECT slides FROM decks WHERE id = ?').get(d.id).slides).length }));
     ctx.html(String(carouselPage({ user, csrf: ctx.csrf, deck, decks, tab, unread: unreadFor(ctx.db, user.id), flash: takeFlash(ctx) })));
@@ -429,10 +452,7 @@ export function appRoutes() {
     const format = ['carousel', 'pin', 'quote'].includes(ctx.fields.format) ? ctx.fields.format : 'carousel';
     const palette = ['gold', 'mint', 'sky', 'rose', 'violet'].includes(ctx.fields.palette) ? ctx.fields.palette : 'gold';
     const handle = String(ctx.fields.handle || '').slice(0, 30) || '@' + user.handle;
-    const script = generate(format === 'pin' ? 'pin' : 'carousel', { topic });
-    const slides = format === 'pin'
-      ? [{ kicker: 'PIN', title: script.title, body: script.description }, ...script.overlay.lines.map((l, i) => ({ kicker: `0${i + 1}`, title: l.split(':')[0], body: l }))]
-      : script.slides;
+    const { slides } = buildDeck(format, topic, handle, palette);
     const info = ctx.db.prepare('INSERT INTO decks (user_id,topic,format,palette,handle,slides,created_at) VALUES (?,?,?,?,?,?,?)')
       .run(user.id, topic, format, palette, handle, JSON.stringify(slides), new Date().toISOString());
     ctx.redirect(`/app/carousel?id=${info.lastInsertRowid}&tab=${format}`);
