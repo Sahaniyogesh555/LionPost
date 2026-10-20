@@ -50,10 +50,12 @@ ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ''}
 ${scripts.map((s) => `<script src="${s}" defer></script>`).join('\n')}`;
 }
 
+const onHome = () => (process.env.LIONPOST_THEME === 'classic' ? '/' : '/classic');
+
 function nav(active) {
   return html`<nav class="c-nav" data-c-nav>
   <div class="wrap c-nav-inner">
-    <a class="c-brand" href="/classic" aria-label="LionPost classic home">
+    <a class="c-brand" href="${onHome()}" aria-label="LionPost classic home">
       ${raw(logo(26))}<span>Lion<b>Post</b></span>
     </a>
     <div class="c-links">
@@ -65,7 +67,7 @@ function nav(active) {
   <div class="c-drawer" id="c-drawer" data-c-drawer>
     ${NAV.map(([href, label]) => html`<a href="${href}">${label}</a>`)}
     <a href="/register"><b style="color:var(--c-gold)">Start free</b></a>
-    <a href="/">Switch to the new look</a>
+    ${process.env.LIONPOST_THEME === 'classic' ? '' : '<a href="/">Switch to the new look</a>'}
   </div>
 </nav>`;
 }
@@ -75,7 +77,7 @@ function footer() {
   <div class="wrap">
     <div class="c-footer-grid">
       <div>
-        <a href="/classic" style="display:inline-flex">${raw(logo(28))}<span style="margin-left:10px;font-weight:750;font-size:17px">Lion<b style="color:var(--c-gold)">Post</b></span></a>
+        <a href="${onHome()}" style="display:inline-flex">${raw(logo(28))}<span style="margin-left:10px;font-weight:750;font-size:17px">Lion<b style="color:var(--c-gold)">Post</b></span></a>
         <p>One account for writing, scheduling and the community around it. Sixteen tools, free, no card, no trial clock.</p>
       </div>
       <div>
@@ -102,7 +104,7 @@ function footer() {
     </div>
     <div class="c-bottom">
       <span>© ${new Date().getFullYear()} LionPost. All rights reserved.</span>
-      <span>Classic theme · <a href="/" style="color:#a2aab9">see the current design</a></span>
+      <span>${process.env.LIONPOST_THEME === 'classic' ? 'The original layout, rebuilt' : 'Classic theme · <a href="/" style="color:#a2aab9">see the current design</a>'}</span>
     </div>
   </div>
 </footer>`;

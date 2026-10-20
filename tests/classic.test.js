@@ -106,6 +106,12 @@ test('LIONPOST_THEME=classic serves the old layout at the canonical paths', asyn
       assert.equal(article.status, 200);
       assert.match(article.text, /c-article/);
 
+      // With the theme on, the classic layout is the front door: no link
+      // should tell the reader to go and see the design they are looking at.
+      assert.doesNotMatch(home.text, /Switch to the new look/);
+      assert.doesNotMatch(home.text, /see the current design/);
+      assert.match(home.text, /The original layout, rebuilt/);
+
       // The app is untouched by the theme switch.
       const login = await client.get('/login');
       assert.match(login.text, /auth-wrap/);
