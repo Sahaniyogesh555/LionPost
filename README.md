@@ -99,10 +99,22 @@ For durable data, point `LIONPOST_DB` at a persistent volume, or swap
 `lib/db.js` for Postgres. Everything else — routes, views, engines — is
 storage-agnostic and already runs unchanged.
 
-**GitHub Pages** cannot host this app: Pages serves static files only, and
-LionPost is server-rendered with sessions, CSRF and a database. A static export
-would be a shell with dead forms. Use Vercel (above), or any host that runs
-Node 22 with a writable disk.
+**GitHub Pages** serves static files only, so it cannot run the app. A static
+snapshot of the public site is published from `docs/` (generated, 57 pages,
+zero broken internal links):
+
+```bash
+npm run export:static        # rebuild docs/ from a seeded database
+```
+
+The snapshot covers the landing page, all sixteen tool pages, the blog, the
+community and profiles. Forms are neutralised with an explanation, and
+accounts/automations/live tools point at the deploy instructions — anything
+that needs a server needs a server.
+
+**Durable previews.** Run `node server.js` on any host with a disk and
+`LIONPOST_DB` set, then point a domain at it. That is the only configuration
+where sessions, the scheduler and writes all behave as designed.
 
 ## Layout
 
