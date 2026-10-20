@@ -111,6 +111,9 @@ test('LIONPOST_THEME=classic serves the old layout at the canonical paths', asyn
       assert.doesNotMatch(home.text, /Switch to the new look/);
       assert.doesNotMatch(home.text, /see the current design/);
       assert.match(home.text, /The original layout, rebuilt/);
+      // ...and its own links stay at the root, not back under /classic.
+      assert.match(home.text, /href="\/blog\//);
+      assert.doesNotMatch(home.text, /href="\/classic\/blog/);
 
       // The app is untouched by the theme switch.
       const login = await client.get('/login');

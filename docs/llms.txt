@@ -4,13 +4,13 @@
 
 ## Tools
 
-- [All tools](https://127.0.0.1:39481/tools): the full catalogue with one page per tool
-- [Keyword research](https://127.0.0.1:39481/tools/keyword-research): volume, difficulty, intent and trend estimates
-- [AEO checker](https://127.0.0.1:39481/tools/aeo-checker): 18 checks for answer engine visibility
+- [All tools](https://127.0.0.1:46703/tools): the full catalogue with one page per tool
+- [Keyword research](https://127.0.0.1:46703/tools/keyword-research): volume, difficulty, intent and trend estimates
+- [AEO checker](https://127.0.0.1:46703/tools/aeo-checker): 18 checks for answer engine visibility
 
 ## Writing
 
-- [How to run a content queue without becoming a content machine](https://127.0.0.1:39481/blog/how-to-run-a-content-queue-without-becoming-a-content-machine): A weekly ritual for people who publish alone: choose three ideas, write one properly, schedule the rest, and review on Friday.
-- [What an answer engine actually reads on your page](https://127.0.0.1:39481/blog/what-an-answer-engine-actually-reads-on-your-page): AI answers quote pages that are easy to quote. Here is the short list of things that decide it, and the fixes that take an afternoon.
-- [Sixteen tools, one login: why we bundled instead of unbundled](https://127.0.0.1:39481/blog/sixteen-tools-one-login-why-we-bundled-instead-of-unbundled): Most creator stacks are five subscriptions and four logins. We went the other way, and here is what it cost.
-- [The scheduler is the product](https://127.0.0.1:39481/blog/the-scheduler-is-the-product): Anyone can call an API once. The hard part is the third week, when a token expires and nobody is watching.
+- [How to run a content queue without becoming a content machine](https://127.0.0.1:46703/blog/how-to-run-a-content-queue-without-becoming-a-content-machine): A weekly ritual for people who publish alone: choose three ideas, write one properly, schedule the rest, and review on Friday.
+- [What an answer engine actually reads on your page](https://127.0.0.1:46703/blog/what-an-answer-engine-actually-reads-on-your-page): AI answers quote pages that are easy to quote. Here is the short list of things that decide it, and the fixes that take an afternoon.
+- [Sixteen tools, one login: why we bundled instead of unbundled](https://127.0.0.1:46703/blog/sixteen-tools-one-login-why-we-bundled-instead-of-unbundled): Most creator stacks are five subscriptions and four logins. We went the other way, and here is what it cost.
+- [The scheduler is the product](https://127.0.0.1:46703/blog/the-scheduler-is-the-product): Anyone can call an API once. The hard part is the third week, when a token expires and nobody is watching.

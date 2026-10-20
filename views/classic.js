@@ -24,12 +24,16 @@ function logo(size = 26) {
 </svg>`;
 }
 
-const NAV = [
-  ['/classic#download', 'Download'],
-  ['/classic#features', 'Features'],
-  ['/classic#why', 'Why free'],
-  ['/classic#contact', 'Contact'],
-  ['/classic/blog', 'Blog'],
+/* With LIONPOST_THEME=classic the old layout owns the root, so its own links
+ * have to stay in that URL space instead of pointing back at /classic. */
+const base = () => (process.env.LIONPOST_THEME === 'classic' ? '' : '/classic');
+
+const navItems = () => [
+  [`${base()}#download`, 'Download'],
+  [`${base()}#features`, 'Features'],
+  [`${base()}#why`, 'Why free'],
+  [`${base()}#contact`, 'Contact'],
+  [`${base()}/blog`, 'Blog'],
 ];
 
 function head({ title, description, canonical = '', scripts = [] }) {
@@ -50,7 +54,7 @@ ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ''}
 ${scripts.map((s) => `<script src="${s}" defer></script>`).join('\n')}`;
 }
 
-const onHome = () => (process.env.LIONPOST_THEME === 'classic' ? '/' : '/classic');
+const onHome = () => base() || '/';
 
 function nav(active) {
   return html`<nav class="c-nav" data-c-nav>
@@ -59,15 +63,15 @@ function nav(active) {
       ${raw(logo(26))}<span>Lion<b>Post</b></span>
     </a>
     <div class="c-links">
-      ${NAV.map(([href, label]) => html`<a href="${href}" class="${active === label ? 'on' : ''}">${label}</a>`)}
+      ${navItems().map(([href, label]) => html`<a href="${href}" class="${active === label ? 'on' : ''}">${label}</a>`)}
       <a class="cta" href="/register">Start free</a>
     </div>
     <button class="c-burger" type="button" data-c-burger aria-expanded="false" aria-controls="c-drawer">☰</button>
   </div>
   <div class="c-drawer" id="c-drawer" data-c-drawer>
-    ${NAV.map(([href, label]) => html`<a href="${href}">${label}</a>`)}
+    ${navItems().map(([href, label]) => html`<a href="${href}">${label}</a>`)}
     <a href="/register"><b style="color:var(--c-gold)">Start free</b></a>
-    ${process.env.LIONPOST_THEME === 'classic' ? '' : '<a href="/">Switch to the new look</a>'}
+    ${process.env.LIONPOST_THEME === 'classic' ? '' : raw('<a href="/">Switch to the new look</a>')}
   </div>
 </nav>`;
 }
@@ -95,7 +99,7 @@ function footer() {
       </div>
       <div>
         <h4>More</h4>
-        <a href="/classic/blog">Blog</a>
+        <a href="${base()}/blog">Blog</a>
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
@@ -104,7 +108,7 @@ function footer() {
     </div>
     <div class="c-bottom">
       <span>© ${new Date().getFullYear()} LionPost. All rights reserved.</span>
-      <span>${process.env.LIONPOST_THEME === 'classic' ? 'The original layout, rebuilt' : 'Classic theme · <a href="/" style="color:#a2aab9">see the current design</a>'}</span>
+      <span>${process.env.LIONPOST_THEME === 'classic' ? 'The original layout, rebuilt' : raw('Classic theme · <a href="/" style="color:#a2aab9">see the current design</a>')}</span>
     </div>
   </div>
 </footer>`;
@@ -257,12 +261,12 @@ export function classicLanding({ stats, posts, flash = null }) {
       <p>Short, specific posts about keeping a queue alive and getting quoted by machines.</p>
     </div>
     <div style="display:grid;gap:0">
-      ${posts.map((p) => html`<a class="c-post-row" href="/classic/blog/${p.slug}">
+      ${posts.map((p) => html`<a class="c-post-row" href="${base()}/blog/${p.slug}">
         <div><h3>${p.title}</h3><p>${p.excerpt}</p></div>
         <time>${dateLong(p.published_at)}</time>
       </a>`)}
     </div>
-    <div style="text-align:center;margin-top:34px"><a class="c-btn ghost" href="/classic/blog">Read the blog</a></div>
+    <div style="text-align:center;margin-top:34px"><a class="c-btn ghost" href="${base()}/blog">Read the blog</a></div>
   </div>
 </section>`,
   });
@@ -291,10 +295,10 @@ export function classicBlog({ posts, tags = [], tag = '', canonical = '' }) {
 </header>
 <div class="wrap c-blog-body">
   <div>
-    ${years.length === 0 ? html`<p style="color:var(--c-muted)">Nothing filed here yet. <a href="/classic/blog" style="color:var(--c-gold)">Read everything</a>.</p>` : ''}
+    ${years.length === 0 ? html`<p style="color:var(--c-muted)">Nothing filed here yet. <a href="${base()}/blog" style="color:var(--c-gold)">Read everything</a>.</p>` : ''}
     ${years.map((y) => html`
       <h2 class="c-year" id="${y}-ref">${y}</h2>
-      ${byYear.get(y).map((p) => html`<a class="c-post-row" href="/classic/blog/${p.slug}">
+      ${byYear.get(y).map((p) => html`<a class="c-post-row" href="${base()}/blog/${p.slug}">
         <div>
           <h3>${p.title}</h3>
           <p>${p.excerpt}</p>
@@ -307,13 +311,13 @@ export function classicBlog({ posts, tags = [], tag = '', canonical = '' }) {
   <aside class="c-side">
     <div class="c-side-card">
       <h4>Order by</h4>
-      <a href="/classic/blog" class="${tag ? '' : 'on'}">Recent <span>${posts.length || ''}</span></a>
+      <a href="${base()}/blog" class="${tag ? '' : 'on'}">Recent <span>${posts.length || ''}</span></a>
       <a href="/blog">Topics <span>→</span></a>
       <a href="/videos">Videos <span>→</span></a>
     </div>
     <div class="c-side-card">
       <h4>Categories</h4>
-      ${tags.map((t) => html`<a href="/classic/blog/tag/${encodeURIComponent(t.tag)}" class="${tag === t.tag ? 'on' : ''}">${t.tag} <span>${t.n}</span></a>`)}
+      ${tags.map((t) => html`<a href="${base()}/blog/tag/${encodeURIComponent(t.tag)}" class="${tag === t.tag ? 'on' : ''}">${t.tag} <span>${t.n}</span></a>`)}
     </div>
     <div class="c-side-card">
       <h4>About</h4>
@@ -334,9 +338,9 @@ export function classicArticle({ post, others, canonical = '' }) {
     body: html`
 <article class="c-article">
   <div class="c-wrap-narrow">
-    <a href="/classic/blog" style="font-size:13px;color:#6d7688">← All posts</a>
+    <a href="${base()}/blog" style="font-size:13px;color:#6d7688">← All posts</a>
     <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <a href="/classic/blog/tag/${encodeURIComponent(post.tag)}" style="color:var(--c-gold);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600">${post.tag}</a>
+      <a href="${base()}/blog/tag/${encodeURIComponent(post.tag)}" style="color:var(--c-gold);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600">${post.tag}</a>
       <span style="color:#6d7688;font-size:12.5px">${post.read_minutes} min read · ${dateLong(post.published_at)}</span>
     </div>
     <h1>${post.title}</h1>
@@ -347,10 +351,10 @@ export function classicArticle({ post, others, canonical = '' }) {
       <a href="https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(canonical)}" target="_blank" rel="noopener noreferrer nofollow" style="border:1px solid var(--c-line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#a2aab9">X</a>
       <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonical)}" target="_blank" rel="noopener noreferrer nofollow" style="border:1px solid var(--c-line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#a2aab9">Facebook</a>
       <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonical)}" target="_blank" rel="noopener noreferrer nofollow" style="border:1px solid var(--c-line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#a2aab9">LinkedIn</a>
-      <a href="${canonical.startsWith('http') ? canonical : `/classic/blog/${post.slug}`}" style="border:1px solid var(--c-line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#a2aab9">Permalink</a>
+      <a href="${canonical.startsWith('http') ? canonical : `${base()}/blog/${post.slug}`}" style="border:1px solid var(--c-line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:#a2aab9">Permalink</a>
     </div>
     <h3 style="font-size:15px;margin:44px 0 8px">Keep reading</h3>
-    ${others.map((p) => html`<a class="c-post-row" href="/classic/blog/${p.slug}">
+    ${others.map((p) => html`<a class="c-post-row" href="${base()}/blog/${p.slug}">
       <div><h3 style="font-size:16.5px">${p.title}</h3></div>
       <time>${dateLong(p.published_at)}</time>
     </a>`)}
