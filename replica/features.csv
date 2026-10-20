@@ -1,0 +1,48 @@
+feature,area,priority,original,clone,notes
+Landing page with live stats,marketing,must,yes,yes,
+Tool index with 16 tools,marketing,must,yes,yes,
+One page per tool,marketing,must,yes,yes,
+Public blog,marketing,should,yes,yes,
+FAQ and legal pages,marketing,should,yes,yes,
+Register and login,auth,must,yes,yes,
+Session logout and profile,auth,must,yes,yes,
+Password reset,auth,could,yes,yes,"Local mail transport prints the link to the server log and shows it on localhost; token hashed, single use, 60 min, sessions revoked."
+Community feed with categories,community,must,yes,yes,
+Create post with markdown,community,must,yes,yes,
+Comments and likes,community,must,yes,yes,
+Pinned and locked posts,community,should,yes,yes,
+Search across posts,community,should,yes,yes,
+User profiles,community,must,yes,yes,
+Notifications,community,could,yes,yes,
+Connect social accounts,connections,must,yes,yes,adapters plus encrypted token vault
+Encrypted credential storage,connections,must,yes,yes,AES-256-GCM
+Connection test and disconnect,connections,should,yes,yes,
+Composer posting to many channels,automation,must,yes,yes,
+Schedule a post for later,automation,must,yes,yes,
+Recurring automations by topic,automation,must,yes,yes,
+Scheduler worker with retries,automation,must,yes,yes,
+Run history with logs,automation,must,yes,yes,
+Queue pause and resume,automation,should,yes,yes,
+AI captions and threads,studio,must,yes,yes,local engine; Gemini key optional
+AI long-form articles,studio,must,yes,yes,export HTML
+Hashtag suggestions,studio,should,yes,yes,
+Carousel maker with PNG export,studio,must,yes,yes,on-device canvas
+Pin maker,studio,should,yes,yes,on-device canvas
+Quote card maker,studio,could,yes,yes,on-device canvas
+AI video maker from a topic,studio,must,yes,yes,canvas plus MediaRecorder
+Shorts cutter from a long video,studio,should,yes,yes,browser capture
+Video translator,studio,should,yes,yes,SRT timing plus optional Gemini
+Keyword research,research,must,yes,yes,estimates; real autosuggest needs network
+AEO checker,research,must,yes,yes,18 checks; URL or pasted HTML
+Website to social via RSS,automation,must,yes,yes,feed parse plus queue
+Blogger auto post,automation,must,yes,yes,export plus optional API
+Facebook Page auto post,automation,must,yes,yes,adapter plus dry run
+Instagram auto post and reels,automation,must,yes,yes,adapter plus dry run
+X auto post,automation,must,yes,yes,adapter plus dry run
+Telegram channel auto post,automation,must,yes,yes,Bot API adapter
+TikTok auto post,automation,should,yes,yes,adapter plus dry run
+YouTube and Dailymotion upload,automation,should,yes,yes,metadata pack plus adapter
+Pinterest auto pin,automation,should,yes,yes,adapter plus dry run
+Dashboard with activity chart,app,must,yes,yes,
+Webhook publishing target,automation,could,no,yes,added: makes posting verifiable
+Audit log,app,could,no,yes,added
