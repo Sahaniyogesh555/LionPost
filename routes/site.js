@@ -9,7 +9,7 @@ import { send as sendMail } from '../lib/mailer.js';
 import { setFlash, takeFlash } from '../lib/flash.js';
 import { siteStats, feedPreview } from '../lib/stats.js';
 import { bySlug } from '../lib/tools.js';
-import { landing, toolsIndex, toolPage, blogIndex, blogPost, aboutPage, legalPage, authPage } from '../views/site.js';
+import { landing, toolsIndex, toolPage, blogIndex, blogPost, videosIndex, videoWatch, aboutPage, legalPage, authPage } from '../views/site.js';
 
 const COLORS = ['#F5B942', '#6EE7B7', '#93C5FD', '#FCA5A5', '#C4B5FD', '#FCD34D', '#67E8F9', '#FDA4AF'];
 
@@ -22,6 +22,12 @@ function uniqueHandle(db, name) {
   let handle = base, i = 1;
   while (db.prepare('SELECT 1 FROM users WHERE handle = ?').get(handle)) handle = `${base}${++i}`;
   return handle;
+}
+
+export function siteOrigin(ctx) {
+  const host = ctx.req.headers['x-forwarded-host'] || ctx.req.headers.host || 'localhost:3000';
+  const proto = String(ctx.req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  return `${proto === 'https' || isSecureRequest(ctx.req) ? 'https' : 'http'}://${host}`;
 }
 
 function safeNext(next) {
@@ -52,19 +58,53 @@ export function siteRoutes() {
     ctx.html(String(toolPage(tool, { user: ctx.user, flash: takeFlash(ctx) })));
   });
 
+  const blogTags = (db) => db.prepare('SELECT tag, COUNT(*) AS n FROM blog_posts GROUP BY tag ORDER BY n DESC, tag').all();
+
   r.get('/blog', (ctx) => {
     ctx.html(String(blogIndex({
       user: ctx.user,
       posts: ctx.db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC').all(),
+      tags: blogTags(ctx.db),
       flash: takeFlash(ctx),
     })));
+  });
+
+  r.get('/blog/tag/:tag', (ctx) => {
+    const tag = String(ctx.params.tag);
+    const posts = ctx.db.prepare('SELECT * FROM blog_posts WHERE lower(tag) = lower(?) ORDER BY published_at DESC').all(tag);
+    if (!posts.length && !blogTags(ctx.db).some((t) => t.tag.toLowerCase() === tag.toLowerCase())) {
+      throw new HttpError(404, 'No posts filed under that topic');
+    }
+    ctx.html(String(blogIndex({ user: ctx.user, posts, tags: blogTags(ctx.db), tag: posts[0]?.tag || tag, flash: takeFlash(ctx) })));
   });
 
   r.get('/blog/:slug', (ctx) => {
     const post = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug = ?').get(ctx.params.slug);
     if (!post) throw new HttpError(404, 'That post does not exist');
     const others = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug != ? ORDER BY published_at DESC LIMIT 2').all(post.slug);
-    ctx.html(String(blogPost({ user: ctx.user, post, others, flash: takeFlash(ctx) })));
+    ctx.html(String(blogPost({
+      user: ctx.user, post, others, flash: takeFlash(ctx),
+      canonical: `${siteOrigin(ctx)}/blog/${post.slug}`,
+    })));
+  });
+
+  r.get('/videos', (ctx) => {
+    ctx.html(String(videosIndex({
+      user: ctx.user,
+      videos: ctx.db.prepare('SELECT * FROM showcase_videos ORDER BY published_at DESC').all(),
+      flash: takeFlash(ctx),
+    })));
+  });
+
+  r.get('/videos/:slug', (ctx) => {
+    const video = ctx.db.prepare('SELECT * FROM showcase_videos WHERE slug = ?').get(ctx.params.slug);
+    if (!video) throw new HttpError(404, 'That video does not exist');
+    ctx.db.prepare('UPDATE showcase_videos SET views = views + 1 WHERE id = ?').run(video.id);
+    const more = ctx.db.prepare('SELECT slug,title,tag,palette FROM showcase_videos WHERE id != ? ORDER BY published_at DESC LIMIT 3').all(video.id);
+    ctx.html(String(videoWatch({
+      user: ctx.user, video: { ...video, views: video.views + 1 }, more, flash: takeFlash(ctx),
+      canonical: `${siteOrigin(ctx)}/videos/${video.slug}`,
+    })));
   });
 
   r.get('/about', (ctx) => {

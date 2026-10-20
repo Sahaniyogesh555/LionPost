@@ -19,7 +19,7 @@ LionPost on a gold-and-ink palette. No dependencies, no build step, `node:sqlite
 
 | Area | State |
 | --- | --- |
-| Marketing | landing with live counters, 16 tool pages, blog + structured data, about, terms, privacy, robots/sitemap/feed/llms |
+| Marketing | landing with live counters, 16 tool pages, blog with topic filters + share controls, video shelf + watch pages, PWA manifest/icons, about, terms, privacy, robots/sitemap/feed/llms |
 | Accounts | register, login, logout, password reset, sessions, CSRF, throttles |
 | Workspace | dashboard, composer (6 formats), drafts, keywords, AEO, video, carousel, pin, shorts, settings, notifications |
 | Automations | connections + AES-256-GCM vault, feeds, schedules, worker, dry/live runs, run log, audit |

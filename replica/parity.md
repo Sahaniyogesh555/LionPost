@@ -1,9 +1,9 @@
 ## Parity: 100.0 / 100
 
-features 100.0  (45 counted, must-haves 29 of 29 done)
+features 100.0  (49 counted, must-haves 29 of 29 done)
 
 ## By area, weakest first
-- marketing                    100.0  (5 features)
+- marketing                    100.0  (9 features)
 - auth                         100.0  (3 features)
 - community                    100.0  (7 features)
 - connections                  100.0  (3 features)

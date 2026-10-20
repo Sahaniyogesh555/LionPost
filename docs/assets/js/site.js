@@ -15,6 +15,19 @@
     $('[data-scrim]')?.classList.remove('show');
   });
 
+  // Share row: copy the canonical URL
+  $$('[data-copy-url]').forEach((btn) => btn.addEventListener('click', async () => {
+    const url = btn.dataset.copyText || location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      const old = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = old; }, 1400);
+    } catch {
+      window.prompt('Copy this link', url);
+    }
+  }));
+
   // Copy any element's text
   $$('[data-copy]').forEach((btn) => btn.addEventListener('click', async () => {
     const target = btn.closest('[data-studio-output]')?.querySelector('[data-output-text]')

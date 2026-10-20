@@ -47,6 +47,9 @@ for (const p of db.prepare('SELECT slug FROM blog_posts ORDER BY published_at DE
 for (const c of db.prepare('SELECT slug FROM categories').all()) paths.add(`/community/category/${c.slug}`);
 for (const p of db.prepare('SELECT slug FROM posts ORDER BY pinned DESC, created_at DESC').all()) paths.add(`/community/${p.slug}`);
 for (const u of db.prepare('SELECT handle FROM users ORDER BY id').all()) paths.add(`/u/${u.handle}`);
+paths.add('/videos');
+for (const v of db.prepare('SELECT slug FROM showcase_videos').all()) paths.add(`/videos/${v.slug}`);
+for (const t of db.prepare('SELECT DISTINCT tag FROM blog_posts').all()) paths.add(`/blog/tag/${encodeURIComponent(t.tag)}`);
 const files = ['/robots.txt', '/llms.txt', '/sitemap.xml', '/feed.xml'];
 
 // --- link rewriting ---------------------------------------------------------
@@ -115,6 +118,12 @@ for (const dir of ['css', 'js']) {
 }
 fs.copyFileSync('public/favicon.svg', path.join(OUT, 'favicon.svg'));
 fs.copyFileSync('public/favicon.svg', path.join(OUT, 'assets', 'favicon.svg'));
+fs.copyFileSync('public/manifest.webmanifest', path.join(OUT, 'assets', 'manifest.webmanifest'));
+fs.copyFileSync('public/apple-touch-icon.png', path.join(OUT, 'assets', 'apple-touch-icon.png'));
+fs.mkdirSync(path.join(OUT, 'assets', 'icons'), { recursive: true });
+for (const icon of fs.readdirSync('public/icons')) {
+  fs.copyFileSync(path.join('public/icons', icon), path.join(OUT, 'assets', 'icons', icon));
+}
 
 // a 404 that still looks like the product
 const notFound = await get('/nothing-here');

@@ -18,13 +18,14 @@ outbound internet beyond the package registries.
 | `pages.test.js` | 8 | 8 | 0 | landing, all 16 tools, blog + JSON-LD, robots/sitemap/feed/llms, 404, every app screen, studio save, health |
 | `reset.test.js` | 6 | 6 | 0 | forgot form, no user enumeration, one-hour single-use token, weak/mismatched password, session revocation, new password works |
 | `wiring.test.js` | 5 | 5 | 0 | every script exists, every queried id and data attribute is in the markup, JSON payloads parse, demos call real endpoints |
-| `links.test.js` | 2 | 2 | 0 | 94 pages crawled from 18 seeds, 0 broken links; public site walkable signed out |
+| `links.test.js` | 2 | 2 | 0 | 99 pages crawled from 18 seeds, 0 broken links; public site walkable signed out |
+| `library.test.js` | 5 | 5 | 0 | video shelf, watch page and view counter, blog topics, share controls, manifest/icons/sitemap |
 | `newuser.test.js` | 3 | 3 | 0 | a cold account walks every screen, runs the full loop, sees no `undefined` |
-| **Total** | **64** | **64** | **0** | |
+| **Total** | **69** | **69** | **0** | |
 
 ```bash
 npm test
-# tests 64, pass 64, fail 0
+# tests 69, pass 69, fail 0
 ```
 
 Suites run against a real HTTP server on `127.0.0.1:0` with a fresh seeded
@@ -34,7 +35,7 @@ SQLite file per test, so ordering never matters and nothing touches `data/`.
 
 | Tool | Command | Result |
 | --- | --- | --- |
-| Parity | `parity.py replica/features.csv` | **100.0 / 100**, 45 counted features, 29 of 29 must-haves, 0 missing |
+| Parity | `parity.py replica/features.csv` | **100.0 / 100**, 49 counted features, 29 of 29 must-haves, 0 missing |
 | Contrast | `contrast.py replica/design/tokens.json` | **20 pairs, 0 failing AA** (fixed `--dim`: `#6d7688` → `#848da0`) |
 | Rebrand sweep | `sweep.py . --config replica/brand.json` | **Clean** — no original name, domain or brand colour in the tree |
 
@@ -52,6 +53,7 @@ Run against a live server with the seeded database.
 | `POST /forgot` for a known address | link logged, token stored hashed, 60-minute expiry |
 | Reset with reused token | 410 |
 | Keyword research, `content automation` | 22 phrases, deterministic, CSV export 200 |
+| `/videos` and a watch page | 200, canvas payload parses, view counter increments, unknown slug 404 |
 | AEO on `/blog/how-to-run-a-content-queue-without-becoming-a-content-machine` | **89/100**, 14 passed, 1 failed (HTTPS only), 18 checks |
 | Webhook connection test | "Webhook responded 200" |
 | Live automation run | delivered, `simulated:false`, response stored in the run log |

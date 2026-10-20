@@ -301,24 +301,53 @@ export function toolPage(t, { user, flash }) {
   });
 }
 
-export function blogIndex({ user, posts, flash }) {
+function shareRow({ url, title, compact = false }) {
+  const u = encodeURIComponent(url);
+  const t = encodeURIComponent(title);
+  const links = [
+    ['X', `https://x.com/intent/tweet?text=${t}&url=${u}`, 'share-x'],
+    ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`, 'share-fb'],
+    ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, 'share-li'],
+    ['Reddit', `https://www.reddit.com/submit?url=${u}&title=${t}`, 'share-rd'],
+  ];
+  return html`<div class="share-row ${compact ? 'compact' : ''}">
+    <span class="share-label">Share</span>
+    ${links.map(([label, href, cls]) => html`<a class="share-btn ${cls}" href="${href}" target="_blank" rel="noopener noreferrer nofollow">${label}</a>`)}
+    <button type="button" class="share-btn" data-copy-url data-copy-text="${url}">Copy link</button>
+  </div>`;
+}
+
+function tagStrip(tags, active = '') {
+  if (!tags.length) return '';
+  return html`<div class="tag-strip" role="navigation" aria-label="Filter posts by topic">
+    <a class="chip ${active ? '' : 'gold'}" href="/blog">All posts</a>
+    ${tags.map((t) => html`<a class="chip ${active === t.tag ? 'gold' : ''}" href="/blog/tag/${encodeURIComponent(t.tag)}">${t.tag}<span class="tag-n">${t.n}</span></a>`)}
+  </div>`;
+}
+
+export function blogIndex({ user, posts, flash, tags = [], tag = '' }) {
   return sitePage({
-    title: 'Blog · LionPost',
+    title: tag ? `${tag} posts · LionPost blog` : 'Blog · LionPost',
     description: 'Notes on publishing alone: queues, weekly reviews, answer engines and the boring half of automation.',
     user, active: '/blog', flash,
     body: html`
 <section class="tool-hero"><div class="shell">
   <span class="eyebrow">The blog</span>
-  <h1>Notes from the boring half of publishing.</h1>
-  <p class="lede">Short, specific posts about keeping a queue alive, reading your own numbers, and getting quoted by machines. No growth theatre.</p>
+  <h1>${tag ? `${tag} posts.` : 'Notes from the boring half of publishing.'}</h1>
+  <p class="lede">${tag
+    ? `Everything filed under ${tag}. Same rule as the rest of the blog: specific, short, no growth theatre.`
+    : 'Short, specific posts about keeping a queue alive, reading your own numbers, and getting quoted by machines. No growth theatre.'}</p>
+  ${tagStrip(tags, tag)}
 </div></section>
 <section class="section tight"><div class="shell">
-  <div class="blog-strip">${posts.map(blogCard)}</div>
+  ${posts.length
+    ? html`<div class="blog-strip">${posts.map(blogCard)}</div>`
+    : html`<div class="empty"><h3>Nothing filed here yet</h3><p>Try another topic, or <a href="/blog">read everything</a>.</p></div>`}
 </div></section>`,
   });
 }
 
-export function blogPost({ user, post, others, flash }) {
+export function blogPost({ user, post, others, flash, canonical = '' }) {
   const faq = [];
   const faqMatches = [...String(post.body_html).matchAll(/<h3>(.*?)<\/h3>\s*<p>([\s\S]*?)<\/p>/g)];
   for (const m of faqMatches) faq.push({ q: m[1].replace(/<[^>]+>/g, ''), a: m[2].replace(/<[^>]+>/g, '').trim() });
@@ -330,7 +359,7 @@ export function blogPost({ user, post, others, flash }) {
         datePublished: post.published_at, dateModified: post.published_at,
         author: { '@type': 'Organization', name: 'LionPost' },
         publisher: { '@type': 'Organization', name: 'LionPost' },
-        mainEntityOfPage: `https://lionpost.local/blog/${post.slug}`,
+        mainEntityOfPage: `${canonical || `/blog/${post.slug}`}`,
       },
       ...(faq.length ? [{ '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }] : []),
     ],
@@ -339,16 +368,18 @@ export function blogPost({ user, post, others, flash }) {
     title: `${post.title} · LionPost`,
     description: post.excerpt,
     user, active: '/blog', flash,
-    canonical: `https://lionpost.local/blog/${post.slug}`,
+    canonical: canonical || `/blog/${post.slug}`,
     extraHead: `<meta property="og:type" content="article"><script type="application/ld+json">${JSON.stringify(schema).replaceAll('</', '<\\/')}</script>`,
     body: html`
 <article class="section"><div class="shell" style="max-width:760px">
   <a class="small dim" href="/blog">← All posts</a>
-  <div class="row" style="margin:18px 0 12px"><span class="chip gold">${post.tag}</span><span class="dim small">${post.read_minutes} min read · ${dateLong(post.published_at)}</span></div>
+  <div class="row" style="margin:18px 0 12px"><a class="chip gold" href="/blog/tag/${encodeURIComponent(post.tag)}">${post.tag}</a><span class="dim small">${post.read_minutes} min read · ${dateLong(post.published_at)}</span></div>
   <h1 style="font-size:clamp(32px,4.4vw,48px);letter-spacing:-.04em;line-height:1.06">${post.title}</h1>
   <p class="lede" style="margin-top:16px">${post.excerpt}</p>
   <div class="hr"></div>
   <div class="md post-body">${raw(post.body_html)}</div>
+  <div class="hr"></div>
+  ${shareRow({ url: canonical || `/blog/${post.slug}`, title: post.title })}
   <div class="hr"></div>
   <div class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
     <div class="grow"><h3 style="font-size:16px">Get the next one in the queue</h3><p class="muted small" style="margin-top:4px">One account, sixteen tools, no card.</p></div>
@@ -545,5 +576,85 @@ export function authPage({ mode, user, flash, next = '', csrf = '', token = '', 
     </div>
   </main>
 </div>`,
+  });
+}
+
+export function videosIndex({ user, videos, flash }) {
+  return sitePage({
+    title: 'Videos · LionPost',
+    description: 'Short vertical videos on publishing, filmed as scripts and rendered in the browser. No watermark, no upload.',
+    user, active: '/videos', flash,
+    body: html`
+<section class="tool-hero"><div class="shell">
+  <span class="eyebrow">The shelf</span>
+  <h1>Thirty-five seconds, one idea.</h1>
+  <p class="lede">Every clip here is a script the studio wrote and the browser rendered. Click one to play it: the player draws each scene on a canvas, so nothing is streamed and nothing is stored.</p>
+  <div class="row"><a class="btn" href="/app/videos">${icon('video', 16)} Make one</a><a class="btn ghost" href="/tools/ai-video-maker">How the tool works</a></div>
+</div></section>
+<section class="section tight"><div class="shell">
+  <div class="video-grid">
+    ${videos.map((v) => html`<a class="video-card" href="/videos/${v.slug}">
+      <div class="video-thumb" style="--vc:${v.palette === 'mint' ? '#6EE7B7' : v.palette === 'sky' ? '#93C5FD' : v.palette === 'rose' ? '#FCA5A5' : '#F5B942'}">
+        ${icon('play', 26)}
+        <span class="video-dur">${Math.floor(v.duration_seconds / 60)}:${String(v.duration_seconds % 60).padStart(2, '0')}</span>
+      </div>
+      <div class="video-meta">
+        <span class="chip">${v.tag}</span>
+        <h3>${v.title}</h3>
+        <p>${v.summary}</p>
+        <span class="dim small">${number(v.views)} views · ${dateLong(v.published_at)}</span>
+      </div>
+    </a>`)}
+  </div>
+</div></section>`,
+  });
+}
+
+export function videoWatch({ user, video, more, flash, canonical = '' }) {
+  const scenes = JSON.parse(video.scenes);
+  const payload = JSON.stringify({ scenes, palette: video.palette, title: video.title }).replaceAll('</', '<\\/');
+  const duration = `${Math.floor(video.duration_seconds / 60)}:${String(video.duration_seconds % 60).padStart(2, '0')}`;
+  return sitePage({
+    title: `${video.title} · LionPost`,
+    description: video.summary,
+    user, active: '/videos', flash, canonical,
+    scripts: ['/assets/js/video.js'],
+    extraHead: `<meta property="og:type" content="video.other">`,
+    body: html`
+<script type="application/ld+json">${raw(JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'VideoObject',
+  name: video.title, description: video.summary, duration: `PT${video.duration_seconds}S`,
+  uploadDate: video.published_at, thumbnailUrl: `${canonical || ''}/assets/icons/icon-512.png`,
+}))}</script>
+<section class="section"><div class="shell watch-layout">
+  <div class="stack">
+    <div class="video-stage watch-stage"><canvas data-video-canvas width="1080" height="1920"></canvas></div>
+    <div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn" data-video-play>${icon('play', 15)} Play</button>
+      <button class="btn ghost" data-video-record>${icon('download', 14)} Record &amp; save</button>
+      <span class="small dim" data-video-status>Ready. ${scenes.length} scenes, ${duration}.</span>
+    </div>
+  </div>
+  <div class="stack">
+    <a class="small dim" href="/videos">← All videos</a>
+    <h1 style="font-size:clamp(26px,3vw,36px)">${video.title}</h1>
+    <div class="row"><span class="chip gold">${video.tag}</span><span class="dim small">${duration} · ${number(video.views)} views · ${dateLong(video.published_at)}</span></div>
+    <p class="muted">${video.summary}</p>
+    ${shareRow({ url: canonical || `/videos/${video.slug}`, title: video.title })}
+    <div class="card">
+      <div class="card-title"><h3>Script</h3><span class="chip">${scenes.length} scenes</span></div>
+      <ol class="script-list">${scenes.map((sc) => html`<li><b>${sc.text}</b><span>${sc.sub || ''} · ${sc.seconds}s</span></li>`)}</ol>
+    </div>
+    <div class="notice">${icon('shield', 14)} Rendered on your device from this script. Nothing is uploaded, and the download is a WebM you can post anywhere.</div>
+  </div>
+</div></section>
+<section class="section tight"><div class="shell">
+  <h2 style="font-size:20px;margin-bottom:14px">More from the shelf</h2>
+  <div class="video-grid">${more.map((v) => html`<a class="video-card" href="/videos/${v.slug}">
+    <div class="video-thumb small" style="--vc:${v.palette === 'mint' ? '#6EE7B7' : v.palette === 'sky' ? '#93C5FD' : v.palette === 'rose' ? '#FCA5A5' : '#F5B942'}">${icon('play', 18)}</div>
+    <div class="video-meta"><h4>${v.title}</h4><span class="dim small">${v.tag}</span></div>
+  </a>`)}</div>
+</div></section>
+<script type="application/json" data-video-data>${raw(payload)}</script>`,
   });
 }

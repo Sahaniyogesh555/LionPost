@@ -3,6 +3,7 @@ import { html, raw, icon, brand, avatar, esc, timeAgo, flashMessages } from './u
 const SITE_NAV = [
   ['/tools', 'Tools'],
   ['/community', 'Community'],
+  ['/videos', 'Videos'],
   ['/blog', 'Blog'],
   ['/#how', 'How it works'],
 ];
@@ -39,6 +40,12 @@ function head({ title, description = '', scripts = [], canonical = '' }) {
 <meta property="og:type" content="website">
 ${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ''}
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/assets/manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="LionPost">
+<meta name="application-name" content="LionPost">
+<meta name="theme-color" content="#0B0D12">
 <link rel="stylesheet" href="/assets/css/app.css">
 ${scripts.map((s) => `<script src="${s}" defer></script>`).join('\n')}`;
 }

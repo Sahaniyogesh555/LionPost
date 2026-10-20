@@ -46,3 +46,7 @@ Pinterest auto pin,automation,should,yes,yes,adapter plus dry run
 Dashboard with activity chart,app,must,yes,yes,
 Webhook publishing target,automation,could,no,yes,added: makes posting verifiable
 Audit log,app,could,no,yes,added
+Public video shelf with duration and views,marketing,should,yes,yes,"4 clips seeded; /videos and /videos/<slug>, plays from a canvas, VideoObject schema."
+Blog topics / posts by category,marketing,should,yes,yes,"Tag strip on the index, /blog/tag/<tag>, filtered index and a 404 for unknown topics."
+Share controls on articles,marketing,could,yes,yes,"X, Facebook, LinkedIn, Reddit intents plus copy-link; canonical URL is absolute per request."
+Installable app manifest and icons,marketing,could,yes,yes,"manifest.webmanifest, 192/512/maskable PNGs, apple-touch-icon, theme colour, shortcuts."

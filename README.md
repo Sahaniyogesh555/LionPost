@@ -27,8 +27,9 @@ Delete `data/lionpost.db*` to re-seed.
 ## What is in it
 
 **Marketing site** — landing page with live counters, sixteen tool pages, a
-blog with structured data, about, terms, privacy, `robots.txt`, `sitemap.xml`,
-`feed.xml` and `llms.txt`.
+blog with topic filters and share controls, a video shelf whose clips render in
+the browser, about, terms, privacy, `robots.txt`, `sitemap.xml`, `feed.xml`,
+`llms.txt`, and an installable-app manifest with icons.
 
 **Accounts** — registration, sign-in, sign-out, password reset with hashed
 single-use tokens, scrypt password hashing, 30-day sessions, CSRF on every
