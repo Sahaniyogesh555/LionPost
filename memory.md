@@ -38,6 +38,18 @@ Source `https://github.com/Jakeschincariol/replica-skill`, v1.0.0, commit
 6 stdlib Python tools) plus a local README with provenance. Upstream tests
 ran green (57/57) from a throwaway clone; they are not vendored (D4 below).
 
+### Done: public preview
+
+- Vercel project `lionpost` (prj_zHOqaNAFtsB4d5PRgQI4adu2HSMm), production
+  alias **https://lionpost.vercel.app**, framework preset `node`, Node 22.x,
+  built from `arena/e59b6511-lionpost`.
+- `api/index.js` runs the whole app as one function; `vercel.json` rewrites
+  every path to it and bundles `public/**`.
+- Auto-deploy from Git is disabled on the project; redeploy from the dashboard
+  or set `framework` + link the repo.
+- `docs/` holds a 57-page static export for GitHub Pages; the Pages site cannot
+  be enabled with this token, so the workflow is manual.
+
 ### Not done
 
 - No browser in the sandbox, so the canvas/`MediaRecorder` paths are verified

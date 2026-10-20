@@ -76,6 +76,21 @@ real; Telegram needs a bot token to do the same.
 **Email delivery.** `lib/mailer.js` is a local transport. Reset links are
 printed to the server log and kept in memory; there is no SMTP hop to test.
 
+
+## Deployment
+
+| Target | Result |
+| --- | --- |
+| Vercel project `lionpost` | READY, production alias **https://lionpost.vercel.app** |
+| Node runtime on Vercel | 22.x, `node:sqlite` available; database and vault key live in `/tmp` |
+| Live spot checks | `/` renders seeded counters, `/login` renders, `/api/health` returns 200, `/assets/css/app.css` served from `includeFiles` |
+| GitHub Pages | static export committed to `docs/`; Pages cannot be enabled with the available token (403), workflow is dispatch-only |
+
+Serverless caveats: the SQLite file is per-instance and reseeded on every cold
+start, so accounts and posts made in the preview do not persist, and the
+scheduler worker is not started. Manual runs, tools and the whole read surface
+work.
+
 ## Skill pack
 
 The Replica skill pack itself (11 skills, 6 Python tools) was installed from

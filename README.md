@@ -81,11 +81,17 @@ delivery is real: point a connection at any URL you control.
 
 ## Deploying
 
-**Vercel.** The repository is ready: `api/index.js` is the single function,
-`vercel.json` rewrites every route to it, and `public/` is bundled with
-`includeFiles` so the asset handler can read CSS and JS. Import the repo, keep
-the root directory, and deploy — no build step, no environment variables
-required.
+**Vercel.** Live at **https://lionpost.vercel.app** (project `lionpost`,
+framework preset Node, root directory `/`, no env vars).
+
+The repository is ready: `api/index.js` is the single function, `vercel.json`
+rewrites every route to it, and `public/` is bundled with `includeFiles` so the
+asset handler can read CSS and JS. Import the repo, keep the root directory,
+and deploy — no build step, no environment variables required.
+
+Automatic deploys are off for this project, so a push does not ship on its own.
+Trigger a build from the Vercel dashboard (Deployments → Redeploy), or enable
+the Git link under Settings → Git.
 
 Two serverless caveats apply to that preview:
 
