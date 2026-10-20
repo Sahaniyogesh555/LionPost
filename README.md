@@ -37,7 +37,9 @@ GitHub Pages build: fixed navbar, full-bleed hero with a CSS-drawn phone
 mockup, trust strip, four circular feature marks, a split "under the hood"
 section, a call-to-action band, counters and a heavy footer, plus a
 year-grouped blog archive with a category sidebar. Set
-`LIONPOST_THEME=classic` to serve it at `/`, `/blog` and `/blog/<slug>` too.
+`LIONPOST_THEME=classic` to serve it at `/`, `/blog`, `/blog/tag/<tag>` and
+`/blog/<slug>`. The live deployment runs with that variable set, so the front
+door is the 2016-shaped layout; unset it to go back to the current design.
 
 **Accounts** — registration, sign-in, sign-out, password reset with hashed
 single-use tokens, scrypt password hashing, 30-day sessions, CSRF on every

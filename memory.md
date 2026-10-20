@@ -45,7 +45,10 @@ included sections, the year-grouped blog) was read from the repository the user
 supplied and rebuilt as a second front end: `views/classic.js`,
 `public/css/classic.css`, `public/js/classic.js`, routes under `/classic`.
 Same skeleton, LionPost copy and palette, no borrowed assets.
-`LIONPOST_THEME=classic` serves it at `/`, `/blog`, `/blog/<slug>`.
+`LIONPOST_THEME=classic` serves it at `/`, `/blog`, `/blog/tag/<tag>` and
+`/blog/<slug>`, and keeps its own links in that same URL space. Production on
+Vercel has the variable set, so **https://lionpost.vercel.app/** is the
+2016-shaped front end; remove the variable to restore the current design.
 
 ### Done: public preview
 

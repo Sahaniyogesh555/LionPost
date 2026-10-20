@@ -115,6 +115,12 @@ test('LIONPOST_THEME=classic serves the old layout at the canonical paths', asyn
       assert.match(home.text, /href="\/blog\//);
       assert.doesNotMatch(home.text, /href="\/classic\/blog/);
 
+      const tagPage = await client.get('/blog/tag/Engineering');
+      assert.equal(tagPage.status, 200);
+      assert.match(tagPage.text, /class="classic"/);
+      assert.match(tagPage.text, /c-year/);
+      assert.match(tagPage.text, /href="\/blog\/tag\/Engineering"/);
+
       // The app is untouched by the theme switch.
       const login = await client.get('/login');
       assert.match(login.text, /auth-wrap/);

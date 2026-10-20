@@ -94,6 +94,13 @@ export function siteRoutes() {
     if (!posts.length && !blogTags(ctx.db).some((t) => t.tag.toLowerCase() === tag.toLowerCase())) {
       throw new HttpError(404, 'No posts filed under that topic');
     }
+    if (classicMode()) {
+      const label = posts[0]?.tag || tag;
+      return ctx.html(String(classicBlog({
+        posts, tags: blogTags(ctx.db), tag: label,
+        canonical: `${siteOrigin(ctx)}/blog/tag/${encodeURIComponent(label)}`,
+      })));
+    }
     ctx.html(String(blogIndex({ user: ctx.user, posts, tags: blogTags(ctx.db), tag: posts[0]?.tag || tag, flash: takeFlash(ctx) })));
   });
 
