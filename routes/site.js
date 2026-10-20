@@ -10,6 +10,7 @@ import { setFlash, takeFlash } from '../lib/flash.js';
 import { siteStats, feedPreview } from '../lib/stats.js';
 import { bySlug } from '../lib/tools.js';
 import { landing, toolsIndex, toolPage, blogIndex, blogPost, videosIndex, videoWatch, aboutPage, legalPage, authPage } from '../views/site.js';
+import { classicLanding, classicBlog, classicArticle } from '../views/classic.js';
 
 const COLORS = ['#F5B942', '#6EE7B7', '#93C5FD', '#FCA5A5', '#C4B5FD', '#FCD34D', '#67E8F9', '#FDA4AF'];
 
@@ -37,8 +38,19 @@ function safeNext(next) {
 export function siteRoutes() {
   const r = new Router();
 
+  // LIONPOST_THEME=classic serves the 2016-shaped layout at the canonical
+  // paths, so a deployment can look like the old site without a second build.
+  const classicMode = () => process.env.LIONPOST_THEME === 'classic';
+
   r.get('/', (ctx) => {
     const db = ctx.db;
+    if (classicMode()) {
+      return ctx.html(String(classicLanding({
+        stats: siteStats(db),
+        posts: db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC LIMIT 4').all(),
+        flash: takeFlash(ctx),
+      })));
+    }
     ctx.html(String(landing({
       user: ctx.user,
       stats: siteStats(db),
@@ -61,6 +73,13 @@ export function siteRoutes() {
   const blogTags = (db) => db.prepare('SELECT tag, COUNT(*) AS n FROM blog_posts GROUP BY tag ORDER BY n DESC, tag').all();
 
   r.get('/blog', (ctx) => {
+    if (classicMode()) {
+      return ctx.html(String(classicBlog({
+        posts: ctx.db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC').all(),
+        tags: blogTags(ctx.db),
+        canonical: `${siteOrigin(ctx)}/blog`,
+      })));
+    }
     ctx.html(String(blogIndex({
       user: ctx.user,
       posts: ctx.db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC').all(),
@@ -82,6 +101,9 @@ export function siteRoutes() {
     const post = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug = ?').get(ctx.params.slug);
     if (!post) throw new HttpError(404, 'That post does not exist');
     const others = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug != ? ORDER BY published_at DESC LIMIT 2').all(post.slug);
+    if (classicMode()) {
+      return ctx.html(String(classicArticle({ post, others, canonical: `${siteOrigin(ctx)}/blog/${post.slug}` })));
+    }
     ctx.html(String(blogPost({
       user: ctx.user, post, others, flash: takeFlash(ctx),
       canonical: `${siteOrigin(ctx)}/blog/${post.slug}`,
@@ -242,6 +264,45 @@ export function siteRoutes() {
     destroySession(ctx.db, ctx.cookies.lion_session);
     ctx.clearCookie('lion_session');
     ctx.redirect('/');
+  });
+
+  // --- classic theme ------------------------------------------------------
+  // A second front end in the 2016 single-page shape. Same data, same routes
+  // underneath; it exists so the older layout can be compared side by side.
+  r.get('/classic', (ctx) => {
+    ctx.html(String(classicLanding({
+      stats: siteStats(ctx.db),
+      posts: ctx.db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC LIMIT 4').all(),
+      flash: takeFlash(ctx),
+    })));
+  });
+
+  r.get('/classic/blog', (ctx) => {
+    ctx.html(String(classicBlog({
+      posts: ctx.db.prepare('SELECT * FROM blog_posts ORDER BY published_at DESC').all(),
+      tags: blogTags(ctx.db),
+      canonical: `${siteOrigin(ctx)}/classic/blog`,
+    })));
+  });
+
+  r.get('/classic/blog/tag/:tag', (ctx) => {
+    const tag = String(ctx.params.tag);
+    const posts = ctx.db.prepare('SELECT * FROM blog_posts WHERE lower(tag) = lower(?) ORDER BY published_at DESC').all(tag);
+    if (!posts.length) throw new HttpError(404, 'No posts filed under that topic');
+    ctx.html(String(classicBlog({
+      posts, tags: blogTags(ctx.db), tag: posts[0].tag,
+      canonical: `${siteOrigin(ctx)}/classic/blog/tag/${encodeURIComponent(posts[0].tag)}`,
+    })));
+  });
+
+  r.get('/classic/blog/:slug', (ctx) => {
+    const post = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug = ?').get(ctx.params.slug);
+    if (!post) throw new HttpError(404, 'That post does not exist');
+    const others = ctx.db.prepare('SELECT * FROM blog_posts WHERE slug != ? ORDER BY published_at DESC LIMIT 2').all(post.slug);
+    ctx.html(String(classicArticle({
+      post, others,
+      canonical: `${siteOrigin(ctx)}/classic/blog/${post.slug}`,
+    })));
   });
 
   return r;

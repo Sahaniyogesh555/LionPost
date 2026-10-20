@@ -403,6 +403,7 @@ export function aboutPage({ user, stats, flash }) {
   <p class="lede">LionPost started because publishing alone means being the writer, the designer, the scheduler and the analyst, usually in the same hour. The tools were never the hard part. The context switching was.</p>
 </div></section>
 <section class="section tight"><div class="shell" style="max-width:760px;display:grid;gap:20px">
+  <div class="notice">Want the older layout? The same site is also available as a <a href="/classic" style="color:var(--gold-2)">classic single-page theme</a>.</div>
   <div class="card pad-lg"><h2 style="font-size:22px;margin-bottom:10px">What this is</h2>
     <p class="muted">An independent workspace: sixteen tools under one login, plus a forum where the people using them compare notes. ${number(stats.members)} members, ${number(stats.threads)} threads, ${number(stats.posts)} runs logged.</p></div>
   <div class="card pad-lg"><h2 style="font-size:22px;margin-bottom:10px">What it will not do</h2>

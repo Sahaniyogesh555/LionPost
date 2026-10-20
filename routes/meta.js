@@ -18,7 +18,7 @@ export function metaRoutes() {
     const urls = ['/', '/tools', '/community', '/blog', '/about', '/terms', '/privacy', '/login', '/register']
       .concat(['community', 'ai-video-maker', 'blogger-auto-post', 'facebook-auto-post', 'instagram-auto-post', 'shorts-maker', 'video-translator', 'pinterest-auto-pin', 'keyword-research', 'aeo-checker', 'instagram-carousel', 'website-to-social', 'x-twitter-auto-post', 'telegram-auto-post', 'tiktok-auto-post', 'youtube-dailymotion'].map((s) => `/tools/${s}`))
       .concat(ctx.db.prepare('SELECT slug FROM blog_posts').all().map((p) => `/blog/${p.slug}`))
-      .concat(['/videos'])
+      .concat(['/videos', '/classic', '/classic/blog'])
       .concat(ctx.db.prepare('SELECT slug FROM showcase_videos').all().map((v) => `/videos/${v.slug}`))
       .concat(ctx.db.prepare('SELECT DISTINCT tag FROM blog_posts').all().map((t) => `/blog/tag/${encodeURIComponent(t.tag)}`))
       .concat(ctx.db.prepare('SELECT slug FROM posts').all().map((p) => `/community/${p.slug}`));

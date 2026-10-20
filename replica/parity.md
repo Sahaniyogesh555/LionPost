@@ -1,9 +1,9 @@
 ## Parity: 100.0 / 100
 
-features 100.0  (49 counted, must-haves 29 of 29 done)
+features 100.0  (51 counted, must-haves 29 of 29 done)
 
 ## By area, weakest first
-- marketing                    100.0  (9 features)
+- marketing                    100.0  (11 features)
 - auth                         100.0  (3 features)
 - community                    100.0  (7 features)
 - connections                  100.0  (3 features)
@@ -18,3 +18,4 @@ features 100.0  (49 counted, must-haves 29 of 29 done)
 ## Yours, not in the original (not scored)
 - Webhook publishing target
 - Audit log
+- Switchable site theme

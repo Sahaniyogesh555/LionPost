@@ -48,6 +48,10 @@ for (const c of db.prepare('SELECT slug FROM categories').all()) paths.add(`/com
 for (const p of db.prepare('SELECT slug FROM posts ORDER BY pinned DESC, created_at DESC').all()) paths.add(`/community/${p.slug}`);
 for (const u of db.prepare('SELECT handle FROM users ORDER BY id').all()) paths.add(`/u/${u.handle}`);
 paths.add('/videos');
+paths.add('/classic');
+paths.add('/classic/blog');
+for (const p of db.prepare('SELECT slug FROM blog_posts').all()) paths.add(`/classic/blog/${p.slug}`);
+for (const t of db.prepare('SELECT DISTINCT tag FROM blog_posts').all()) paths.add(`/classic/blog/tag/${encodeURIComponent(t.tag)}`);
 for (const v of db.prepare('SELECT slug FROM showcase_videos').all()) paths.add(`/videos/${v.slug}`);
 for (const t of db.prepare('SELECT DISTINCT tag FROM blog_posts').all()) paths.add(`/blog/tag/${encodeURIComponent(t.tag)}`);
 const files = ['/robots.txt', '/llms.txt', '/sitemap.xml', '/feed.xml'];

@@ -38,6 +38,15 @@ Source `https://github.com/Jakeschincariol/replica-skill`, v1.0.0, commit
 6 stdlib Python tools) plus a local README with provenance. Upstream tests
 ran green (57/57) from a throwaway clone; they are not vendored (D4 below).
 
+### Done: classic theme
+
+The 2016 GitHub Pages build of the source site (`_layouts/front.html`, the
+included sections, the year-grouped blog) was read from the repository the user
+supplied and rebuilt as a second front end: `views/classic.js`,
+`public/css/classic.css`, `public/js/classic.js`, routes under `/classic`.
+Same skeleton, LionPost copy and palette, no borrowed assets.
+`LIONPOST_THEME=classic` serves it at `/`, `/blog`, `/blog/<slug>`.
+
 ### Done: public preview
 
 - Vercel project `lionpost` (prj_zHOqaNAFtsB4d5PRgQI4adu2HSMm), production

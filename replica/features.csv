@@ -50,3 +50,6 @@ Public video shelf with duration and views,marketing,should,yes,yes,"4 clips see
 Blog topics / posts by category,marketing,should,yes,yes,"Tag strip on the index, /blog/tag/<tag>, filtered index and a 404 for unknown topics."
 Share controls on articles,marketing,could,yes,yes,"X, Facebook, LinkedIn, Reddit intents plus copy-link; canonical URL is absolute per request."
 Installable app manifest and icons,marketing,could,yes,yes,"manifest.webmanifest, 192/512/maskable PNGs, apple-touch-icon, theme colour, shortcuts."
+Classic single-page marketing layout,marketing,should,yes,yes,"2016 build: fixed nav, hero + phone mockup, trust strip, four feature marks, split section, CTA band, counters, heavy footer. Rebuilt at /classic."
+Year-grouped blog archive with category sidebar,marketing,should,yes,yes,"/classic/blog and /classic/blog/tag/<tag>, grouped by year with an anchor per year and a sticky sidebar."
+Switchable site theme,marketing,could,no,yes,LIONPOST_THEME=classic renders the older layout at the canonical paths. Our addition.

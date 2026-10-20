@@ -19,13 +19,14 @@ outbound internet beyond the package registries.
 | `reset.test.js` | 6 | 6 | 0 | forgot form, no user enumeration, one-hour single-use token, weak/mismatched password, session revocation, new password works |
 | `wiring.test.js` | 5 | 5 | 0 | every script exists, every queried id and data attribute is in the markup, JSON payloads parse, demos call real endpoints |
 | `links.test.js` | 2 | 2 | 0 | 99 pages crawled from 18 seeds, 0 broken links; public site walkable signed out |
+| `classic.test.js` | 7 | 7 | 0 | classic landing sections, year-grouped archive, topic filter, article, self-contained CSS/JS, theme switch |
 | `library.test.js` | 5 | 5 | 0 | video shelf, watch page and view counter, blog topics, share controls, manifest/icons/sitemap |
 | `newuser.test.js` | 3 | 3 | 0 | a cold account walks every screen, runs the full loop, sees no `undefined` |
-| **Total** | **69** | **69** | **0** | |
+| **Total** | **76** | **76** | **0** | |
 
 ```bash
 npm test
-# tests 69, pass 69, fail 0
+# tests 76, pass 76, fail 0
 ```
 
 Suites run against a real HTTP server on `127.0.0.1:0` with a fresh seeded
