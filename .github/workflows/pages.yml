@@ -4,8 +4,9 @@
 name: Pages
 
 on:
-  push:
-    branches: [arena/e59b6511-lionpost]
+  # Manual on purpose: the Pages site has to be enabled once in repository
+  # settings (Settings -> Pages -> Source: GitHub Actions) before this can
+  # deploy. Enable it, then run this workflow from the Actions tab.
   workflow_dispatch:
 
 permissions:
