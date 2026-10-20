@@ -5,7 +5,7 @@
   "description": "LionPost: one account for social automation, AI content tools and a creator community.",
   "type": "module",
   "engines": {
-    "node": ">=22.5"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node server.js",

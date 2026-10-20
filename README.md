@@ -79,6 +79,31 @@ delivery is real: point a connection at any URL you control.
 | `LIONPOST_TICK_MS` | `60000` | worker interval |
 | `LIONPOST_LOG` | `1` | request and mail logging |
 
+## Deploying
+
+**Vercel.** The repository is ready: `api/index.js` is the single function,
+`vercel.json` rewrites every route to it, and `public/` is bundled with
+`includeFiles` so the asset handler can read CSS and JS. Import the repo, keep
+the root directory, and deploy — no build step, no environment variables
+required.
+
+Two serverless caveats apply to that preview:
+
+- SQLite lives in `/tmp`, so the database is reseeded on every cold start.
+  Accounts, threads and runs made in the preview are temporary.
+- The scheduler worker does not run on serverless. Manual runs work; scheduled
+  runs need a durable database and a cron (or run `node server.js` on a host
+  with a disk).
+
+For durable data, point `LIONPOST_DB` at a persistent volume, or swap
+`lib/db.js` for Postgres. Everything else — routes, views, engines — is
+storage-agnostic and already runs unchanged.
+
+**GitHub Pages** cannot host this app: Pages serves static files only, and
+LionPost is server-rendered with sessions, CSRF and a database. A static export
+would be a shell with dead forms. Use Vercel (above), or any host that runs
+Node 22 with a writable disk.
+
 ## Layout
 
 ```
