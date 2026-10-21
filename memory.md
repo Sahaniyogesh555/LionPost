@@ -40,15 +40,20 @@ ran green (57/57) from a throwaway clone; they are not vendored (D4 below).
 
 ### Done: classic theme
 
-The 2016 GitHub Pages build of the source site (`_layouts/front.html`, the
-included sections, the year-grouped blog) was read from the repository the user
-supplied and rebuilt as a second front end: `views/classic.js`,
-`public/css/classic.css`, `public/js/classic.js`, routes under `/classic`.
-Same skeleton, LionPost copy and palette, no borrowed assets.
-`LIONPOST_THEME=classic` serves it at `/`, `/blog`, `/blog/tag/<tag>` and
-`/blog/<slug>`, and keeps its own links in that same URL space. Production on
-Vercel has the variable set, so **https://lionpost.vercel.app/** is the
-2016-shaped front end; remove the variable to restore the current design.
+The 2016 GitHub Pages build (`_layouts/front.html`, the includes, the
+year-grouped blog) was cloned and read, and its **look** rebuilt by
+measurement: `views/classic.js`, `public/css/classic.css`,
+`public/js/classic.js`, routes under `/classic`. Palette, type scale and
+spacing are the 2016 values (`#7b4397`→`#dc2430` hero, `#3498db` band family,
+Catamaran/Muli/Lato, 50px hero h1, 100px section padding); markup, copy and
+artwork are LionPost's. Fonts are self-hosted from @fontsource OFL releases in
+`public/fonts/` (9 woff2 + licences). Two source colours failed AA with white
+text and were darkened: band `#2a7cb4`, links `#2472a4`.
+`LIONPOST_THEME=classic` serves it at `/`, `/blog`, `/blog/tag/<tag>`,
+`/blog/<slug>`, `/about`, `/privacy`, `/terms`, and keeps its own links in that
+same URL space. Production on Vercel has the variable set, so
+**https://lionpost.vercel.app/** is the 2016 look; remove the variable to get
+the current design back.remove the variable to restore the current design.
 
 ### Done: public preview
 

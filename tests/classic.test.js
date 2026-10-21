@@ -13,13 +13,15 @@ test('the classic landing page renders every section in order', async () => {
   await withServer(async ({ client }) => {
     const res = await client.get('/classic');
     assert.equal(res.status, 200);
-    const order = ['c-hero', 'c-strip', 'c-features', 'c-split', 'c-band', 'c-stats', 'c-footer'];
+    const order = ['c-hero', 'c-strip', 'c-band', 'c-features', 'c-contact', 'c-footer'];
     const positions = order.map((cls) => res.text.indexOf(cls));
     positions.forEach((pos, i) => assert.ok(pos > -1, `missing ${order[i]}`));
     assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'sections out of order');
-    assert.match(res.text, /calm way to publish everywhere/);
-    assert.match(res.text, /Get it now/);
+    assert.match(res.text, /next generation publishing tool/);
+    assert.match(res.text, /Get it now for/);
     assert.equal((res.text.match(/class="c-feature"/g) || []).length, 4);
+    // The 2016 palette and the self-hosted faces are what make it look like it.
+    assert.match(res.text, /catamaran-latin-200-normal\.woff2/);
     assert.match(res.text, /\/assets\/css\/classic\.css/);
     assert.match(res.text, /\/assets\/js\/classic\.js/);
     assert.match(res.text, /href="\/register"/);
@@ -43,7 +45,7 @@ test('classic topics filter and unknown ones 404', async () => {
     const tag = db.prepare('SELECT tag FROM blog_posts LIMIT 1').get().tag;
     const res = await client.get('/classic/blog/tag/' + encodeURIComponent(tag));
     assert.equal(res.status, 200);
-    assert.ok(res.text.includes(`Filed under ${tag}`));
+    assert.match(res.text, new RegExp(`filed under ${tag}`, 'i'));
     const none = await client.get('/classic/blog/tag/not-a-topic');
     assert.equal(none.status, 404);
   });
@@ -55,7 +57,7 @@ test('a classic article renders body, canonical and share links', async () => {
     const res = await client.get('/classic/blog/' + post.slug);
     assert.equal(res.status, 200);
     assert.ok(res.text.includes(post.title));
-    assert.match(res.text, /class="md"/);
+    assert.match(res.text, /c-article-body/);
     assert.match(res.text, new RegExp(`rel="canonical" href="${base}/classic/blog/${post.slug}"`));
     assert.match(res.text, /x\.com\/intent/);
     assert.match(res.text, /linkedin\.com\/sharing/);
@@ -107,12 +109,11 @@ test('LIONPOST_THEME=classic serves the old layout at the canonical paths', asyn
       assert.match(article.text, /c-article/);
 
       // With the theme on, the classic layout is the front door: no link
-      // should tell the reader to go and see the design they are looking at.
+      // should point back at /classic or at a design the reader already has.
       assert.doesNotMatch(home.text, /Switch to the new look/);
-      assert.doesNotMatch(home.text, /see the current design/);
-      assert.match(home.text, /The original layout, rebuilt/);
+      assert.doesNotMatch(home.text, /href="\/classic"/);
       // ...and its own links stay at the root, not back under /classic.
-      assert.match(home.text, /href="\/blog\//);
+      assert.match(home.text, /href="\/blog"/);
       assert.doesNotMatch(home.text, /href="\/classic\/blog/);
 
       const tagPage = await client.get('/blog/tag/Engineering');
@@ -120,6 +121,13 @@ test('LIONPOST_THEME=classic serves the old layout at the canonical paths', asyn
       assert.match(tagPage.text, /class="classic"/);
       assert.match(tagPage.text, /c-year/);
       assert.match(tagPage.text, /href="\/blog\/tag\/Engineering"/);
+
+      for (const [path, needle] of [['/about', 'Built for the person doing all of it'], ['/privacy', 'What we store'], ['/terms', 'Acceptable use']]) {
+        const page = await client.get(path);
+        assert.equal(page.status, 200, path);
+        assert.match(page.text, /class="classic"/, path);
+        assert.ok(page.text.includes(needle), path);
+      }
 
       // The app is untouched by the theme switch.
       const login = await client.get('/login');

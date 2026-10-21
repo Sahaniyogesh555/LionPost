@@ -31,15 +31,18 @@ blog with topic filters and share controls, a video shelf whose clips render in
 the browser, about, terms, privacy, `robots.txt`, `sitemap.xml`, `feed.xml`,
 `llms.txt`, and an installable-app manifest with icons.
 
-**Two themes.** The current design is the default. A second, complete front
-end at `/classic` reproduces the layout family of the original site's 2016
-GitHub Pages build: fixed navbar, full-bleed hero with a CSS-drawn phone
-mockup, trust strip, four circular feature marks, a split "under the hood"
-section, a call-to-action band, counters and a heavy footer, plus a
-year-grouped blog archive with a category sidebar. Set
-`LIONPOST_THEME=classic` to serve it at `/`, `/blog`, `/blog/tag/<tag>` and
-`/blog/<slug>`. The live deployment runs with that variable set, so the front
-door is the 2016-shaped layout; unset it to go back to the current design.
+**Two themes.** The current design is the default. A second front end at
+`/classic` rebuilds the *look* of the site's 2016 GitHub Pages build, measured
+from it rather than copied: white page, fixed navbar that turns solid on
+scroll, a purple-to-red hero with a phone in it, a customer strip, a blue
+call-to-action band, four oversized feature marks, a blue "say hello" band and
+a black footer, plus a year-grouped archive with a topic sidebar. The palette,
+type scale and spacing are the 2016 values; the markup, copy and artwork are
+LionPost's. Catamaran, Muli and Lato are self-hosted from their OFL releases
+(`public/fonts/`). Set `LIONPOST_THEME=classic` to serve it at `/`, `/blog`,
+`/blog/tag/<tag>`, `/blog/<slug>`, `/about`, `/privacy` and `/terms`. The live
+deployment runs with that variable set, so the front door is the 2016 look;
+unset it to go back to the current design.
 
 **Accounts** — registration, sign-in, sign-out, password reset with hashed
 single-use tokens, scrypt password hashing, 30-day sessions, CSRF on every

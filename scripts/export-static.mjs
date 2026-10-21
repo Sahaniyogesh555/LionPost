@@ -114,10 +114,18 @@ for (const url of [...paths, ...files]) {
 }
 
 // assets, copied under the same /assets prefix the app uses
-for (const dir of ['css', 'js']) {
+for (const dir of ['css', 'js', 'fonts']) {
   fs.mkdirSync(path.join(OUT, 'assets', dir), { recursive: true });
   for (const f of fs.readdirSync(path.join('public', dir))) {
-    fs.copyFileSync(path.join('public', dir, f), path.join(OUT, 'assets', dir, f));
+    const from = path.join('public', dir, f);
+    const to = path.join(OUT, 'assets', dir, f);
+    // Stylesheets used to reference /assets/... absolutely; on a project page
+    // that path is one segment short, so the fonts have to carry the base.
+    if (f.endsWith('.css')) {
+      fs.writeFileSync(to, fs.readFileSync(from, 'utf8').replaceAll('url("/assets/', `url("${BASE}/assets/`));
+    } else {
+      fs.copyFileSync(from, to);
+    }
   }
 }
 fs.copyFileSync('public/favicon.svg', path.join(OUT, 'favicon.svg'));

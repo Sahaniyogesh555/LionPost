@@ -9,8 +9,8 @@ import { send as sendMail } from '../lib/mailer.js';
 import { setFlash, takeFlash } from '../lib/flash.js';
 import { siteStats, feedPreview } from '../lib/stats.js';
 import { bySlug } from '../lib/tools.js';
-import { landing, toolsIndex, toolPage, blogIndex, blogPost, videosIndex, videoWatch, aboutPage, legalPage, authPage } from '../views/site.js';
-import { classicLanding, classicBlog, classicArticle } from '../views/classic.js';
+import { landing, toolsIndex, toolPage, blogIndex, blogPost, videosIndex, videoWatch, aboutPage, legalPage, authPage, LEGAL_SECTIONS } from '../views/site.js';
+import { classicLanding, classicBlog, classicArticle, classicLegal, classicAbout } from '../views/classic.js';
 
 const COLORS = ['#F5B942', '#6EE7B7', '#93C5FD', '#FCA5A5', '#C4B5FD', '#FCD34D', '#67E8F9', '#FDA4AF'];
 
@@ -137,11 +137,20 @@ export function siteRoutes() {
   });
 
   r.get('/about', (ctx) => {
+    if (classicMode()) {
+      return ctx.html(String(classicAbout({ stats: siteStats(ctx.db) })));
+    }
     ctx.html(String(aboutPage({ user: ctx.user, stats: siteStats(ctx.db), flash: takeFlash(ctx) })));
   });
 
-  r.get('/terms', (ctx) => ctx.html(String(legalPage({ user: ctx.user, kind: 'terms', flash: takeFlash(ctx) }))));
-  r.get('/privacy', (ctx) => ctx.html(String(legalPage({ user: ctx.user, kind: 'privacy', flash: takeFlash(ctx) }))));
+  r.get('/terms', (ctx) => {
+    if (classicMode()) return ctx.html(String(classicLegal({ sections: LEGAL_SECTIONS.terms, terms: true })));
+    ctx.html(String(legalPage({ user: ctx.user, kind: 'terms', flash: takeFlash(ctx) })));
+  });
+  r.get('/privacy', (ctx) => {
+    if (classicMode()) return ctx.html(String(classicLegal({ sections: LEGAL_SECTIONS.privacy })));
+    ctx.html(String(legalPage({ user: ctx.user, kind: 'privacy', flash: takeFlash(ctx) })));
+  });
 
   r.get('/login', (ctx) => {
     if (ctx.user) return ctx.redirect('/app');

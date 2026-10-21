@@ -420,23 +420,28 @@ export function aboutPage({ user, stats, flash }) {
   });
 }
 
-export function legalPage({ user, kind, flash }) {
-  const terms = kind === 'terms';
-  const sections = terms ? [
+export const LEGAL_SECTIONS = {
+  terms: [
     ['The deal', 'LionPost is provided as-is, free of charge. You keep everything you create. We do not claim a licence to your content beyond storing and delivering it at your request.'],
     ['Your account', 'One person, one account. Keep your password to yourself. You are responsible for what is posted through your connected channels.'],
     ['Acceptable use', 'No spam, no impersonation, no scraping other people’s private data, no bulk posting to channels you do not own. Automated posting must respect the destination platform’s rules.'],
     ['Third-party services', 'Connecting a platform means their terms apply too. Tokens are stored encrypted and used only to deliver what you scheduled.'],
     ['Cancellation', 'There is nothing to cancel. Delete your account and the workspace goes with it.'],
     ['Liability', 'The service may be unavailable or wrong. It is provided without warranty, and our liability is limited to what you paid, which is nothing.'],
-  ] : [
+  ],
+  privacy: [
     ['What we store', 'Your name, email, a password hash (scrypt), the content you create, the run logs of your automations, and encrypted third-party tokens you choose to add.'],
     ['What we do not store', 'Rendered video frames, uploaded source video, or payment details. There are no payment details because there is no payment.'],
     ['Cookies', 'One session cookie (HTTP-only) and one CSRF cookie. No advertising cookies, no third-party analytics.'],
     ['Encryption', 'Platform tokens and API keys are encrypted with AES-256-GCM before they touch the database.'],
     ['Your choices', 'You can delete a connection, an automation, an article or your whole account from settings. Deletion is immediate.'],
     ['Contact', 'Privacy questions go through the community questions category or the address on the about page.'],
-  ];
+  ],
+};
+
+export function legalPage({ user, kind, flash }) {
+  const terms = kind === 'terms';
+  const sections = LEGAL_SECTIONS[kind];
   return sitePage({
     title: `${terms ? 'Terms' : 'Privacy'} · LionPost`,
     description: terms ? 'The terms that apply to a free LionPost account.' : 'What LionPost stores, what it does not, and how to delete it.',

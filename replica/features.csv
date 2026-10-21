@@ -50,6 +50,8 @@ Public video shelf with duration and views,marketing,should,yes,yes,"4 clips see
 Blog topics / posts by category,marketing,should,yes,yes,"Tag strip on the index, /blog/tag/<tag>, filtered index and a 404 for unknown topics."
 Share controls on articles,marketing,could,yes,yes,"X, Facebook, LinkedIn, Reddit intents plus copy-link; canonical URL is absolute per request."
 Installable app manifest and icons,marketing,could,yes,yes,"manifest.webmanifest, 192/512/maskable PNGs, apple-touch-icon, theme colour, shortcuts."
-Classic single-page marketing layout,marketing,should,yes,yes,"2016 build: fixed nav, hero + phone mockup, trust strip, four feature marks, split section, CTA band, counters, heavy footer. Rebuilt at /classic."
+Classic single-page marketing layout,marketing,should,yes,yes,"2016 build look, rebuilt by measurement: white nav that goes solid on scroll, purple-to-red hero + phone, customer strip, blue CTA band, four feature marks, blue contact band, black footer. Same palette/type/spacing; own markup, copy and artwork."
 Year-grouped blog archive with category sidebar,marketing,should,yes,yes,"/classic/blog and /classic/blog/tag/<tag>, grouped by year with an anchor per year and a sticky sidebar."
-Switchable site theme,marketing,could,no,yes,LIONPOST_THEME=classic renders the older layout at the canonical paths. Our addition.
+Switchable site theme,marketing,could,no,yes,"LIONPOST_THEME=classic renders the 2016 look at /, /blog, /blog/tag/*, /blog/*, /about, /privacy, /terms. Our addition."
+Self-hosted classic typefaces,marketing,should,yes,yes,"Catamaran, Muli and Lato served from public/fonts (OFL, licences included) instead of the source's Google Fonts link. No request leaves the origin."
+Year-grouped archive with topic sidebar,content,should,yes,yes,"Archive grouped by year with id=""<year>-ref"" anchors, sticky topic sidebar and per-topic pages; article carries share controls."
