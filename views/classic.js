@@ -144,7 +144,7 @@ export function classicLanding() {
     onLanding: true,
     canonical: `${process.env.LIONPOST_URL || ''}${base() || '/'}`,
     body: html`
-<header class="c-hero">
+<div class="c-hero">
   <div class="wrap">
     <div class="c-hero-grid">
       <div>
@@ -155,7 +155,7 @@ export function classicLanding() {
       <div class="c-device-wrap">${raw(phone())}</div>
     </div>
   </div>
-</header>
+</div>
 
 <div class="c-strip">
   <div class="wrap">
@@ -240,12 +240,12 @@ export function classicBlog({ posts, tags = [], tag = '', canonical = '' }) {
     active: 'Blog',
     canonical,
     body: html`
-<header class="c-blog-head">
+<div class="c-blog-head">
   <div class="wrap">
     <h1>${tag ? `${tag} posts.` : 'The blog'}</h1>
     <p>${tag ? `Everything filed under ${tag}.` : 'Notes from the boring half of publishing.'}</p>
   </div>
-</header>
+</div>
 
 <div class="c-blog-body">
   <div class="wrap c-blog-grid">
@@ -290,13 +290,13 @@ export function classicArticle({ post, others = [], canonical = '' }) {
     canonical,
     body: html`
 <article class="c-article">
-  <header class="c-blog-head c-article-head">
+  <div class="c-blog-head c-article-head">
     <div class="wrap">
       <a class="kicker" href="${base()}/blog/tag/${encodeURIComponent(post.tag || 'Post')}">${post.tag || 'Post'}</a>
       <h1>${post.title}</h1>
       <p>${dateLong(post.published_at)} · ${post.read_minutes || 6} min read</p>
     </div>
-  </header>
+  </div>
   <div class="wrap">
     <div class="c-article-body">
       ${raw(post.body_html || '')}
@@ -327,12 +327,12 @@ export function classicLegal({ sections, terms = false }) {
     title: `${terms ? 'Terms' : 'Privacy'} · LionPost`,
     description: terms ? 'The terms that apply to a free LionPost account.' : 'What LionPost stores, what it does not, and how to delete it.',
     body: html`
-<header class="c-blog-head">
+<div class="c-blog-head">
   <div class="wrap">
     <h1>${terms ? 'Terms of use' : 'Privacy policy'}</h1>
     <p>Last updated 20 October 2026. Plain language on purpose.</p>
   </div>
-</header>
+</div>
 <article class="c-article" style="padding-top:56px">
   <div class="wrap">
     <div class="c-article-body">
@@ -349,12 +349,12 @@ export function classicAbout({ stats }) {
     title: 'About · LionPost',
     description: 'Why LionPost exists, what it will not do, and how it is built.',
     body: html`
-<header class="c-blog-head">
+<div class="c-blog-head">
   <div class="wrap">
     <h1>Built for the person doing all of it.</h1>
     <p>LionPost started because publishing alone means being the writer, the designer, the scheduler and the analyst, usually in the same hour.</p>
   </div>
-</header>
+</div>
 <article class="c-article" style="padding-top:56px">
   <div class="wrap">
     <div class="c-article-body">
