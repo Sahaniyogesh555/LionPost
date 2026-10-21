@@ -299,7 +299,7 @@ export function classicArticle({ post, others = [], canonical = '' }) {
   </header>
   <div class="wrap">
     <div class="c-article-body">
-      ${raw(post.body || '')}
+      ${raw(post.body_html || '')}
       <div class="c-share">
         <span class="kicker">Share</span>
         ${share('X', `https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${enc}`, 'tw')}

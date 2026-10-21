@@ -58,6 +58,9 @@ test('a classic article renders body, canonical and share links', async () => {
     assert.equal(res.status, 200);
     assert.ok(res.text.includes(post.title));
     assert.match(res.text, /c-article-body/);
+    // The body has to actually render, not just the frame around it.
+    assert.match(res.text, /<h2>/, 'markdown headings missing');
+    assert.ok(res.text.length > 8000, 'article looks empty');
     assert.match(res.text, new RegExp(`rel="canonical" href="${base}/classic/blog/${post.slug}"`));
     assert.match(res.text, /x\.com\/intent/);
     assert.match(res.text, /linkedin\.com\/sharing/);
