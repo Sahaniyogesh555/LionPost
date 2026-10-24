@@ -39,7 +39,6 @@ const starterAutomations: Automation[] = [
 const starterNotifications: AppNotification[] = [
   { id: 'note-1', title: 'Your post is live', body: 'Your Pinterest pin was published successfully.', time: '12 min ago', read: false, type: 'success' },
   { id: 'note-2', title: 'Automation completed', body: 'Fashion published 8 new pins today.', time: '1 hour ago', read: false, type: 'success' },
-  { id: 'note-3', title: 'A new community reply', body: 'Naveed replied to your affiliate marketing post.', time: '3 hours ago', read: false, type: 'info' },
   { id: 'note-4', title: 'Your weekly summary is ready', body: 'You published 42 posts across 2 channels this week.', time: 'Yesterday', read: true, type: 'info' },
 ]
 
@@ -92,6 +91,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  useEffect(() => {
+    setNotifications((items) => {
+      const filtered = items.filter((item) => !/community/i.test(`${item.title} ${item.body}`))
+      return filtered.length === items.length ? items : filtered
+    })
+  }, [setNotifications])
 
   const dismissToast = useCallback((id: string) => {
     setToasts((items) => items.filter((item) => item.id !== id))

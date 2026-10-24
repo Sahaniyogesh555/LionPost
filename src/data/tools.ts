@@ -8,7 +8,6 @@ export interface ToolDefinition {
 }
 
 export const tools: ToolDefinition[] = [
-  { name: 'Community', description: 'Learn, share and grow with other creators.', path: '/app/community', icon: 'community', color: 'teal' },
   { name: 'AI video maker', description: 'Turn an idea into a narrated vertical video.', path: '/app/video-automation', icon: 'video', color: 'red' },
   { name: 'Blogger automation', description: 'Publish useful articles to your own blog.', path: '/app/blogger', icon: 'blogger', color: 'orange' },
   { name: 'Facebook Page auto post', description: 'Keep your Facebook Page active automatically.', path: '/app/auto-post', icon: 'facebook', color: 'blue' },
@@ -16,9 +15,7 @@ export const tools: ToolDefinition[] = [
   { name: 'Shorts Maker', description: 'Turn one long video into up to five short clips.', path: '/app/shorts-maker', icon: 'shorts', color: 'orange', badge: 'NEW' },
   { name: 'Video Translator', description: 'Translate your video with a natural AI voice.', path: '/app/video-translator', icon: 'translate', color: 'blue', badge: 'NEW' },
   { name: 'Pinterest auto post', description: 'Fresh, useful pins while you focus on creating.', path: '/app/pin-affiliate', icon: 'pinterest', color: 'red' },
-  { name: 'Keyword Research', description: 'Find what people are searching for right now.', path: '/app/keyword-research', icon: 'search', color: 'blue', badge: 'NEW' },
   { name: 'X (Twitter) auto post', description: 'Write once and publish to X without the busywork.', path: '/app/auto-post', icon: 'x', color: 'black' },
-  { name: 'AEO Checker', description: 'Make your content easier for AI answer engines to cite.', path: '/app/aeo-checker', icon: 'aeo', color: 'green', badge: 'NEW' },
   { name: 'Carousel maker', description: 'Design a useful carousel for Instagram and Facebook.', path: '/app/pin-maker', icon: 'carousel', color: 'pink' },
   { name: 'Website to social', description: 'Send every new article to your social channels.', path: '/app/website', icon: 'website', color: 'green' },
   { name: 'Telegram channel auto post', description: 'Keep your channel useful, active and consistent.', path: '/app/auto-post', icon: 'telegram', color: 'blue' },

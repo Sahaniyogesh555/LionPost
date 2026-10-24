@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarClock, CheckCircle2, CircleX, Clock3, Heart, Link2, MessageSquare, Plus, Send, TrendingUp } from 'lucide-react'
+import { ArrowRight, CalendarClock, CheckCircle2, CircleX, Clock3, Link2, Plus, Send, TrendingUp } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import AccountCards from '../components/AccountCards'
@@ -13,16 +13,12 @@ const homeTools = [
   ['Share from my website', 'Every new article goes out', '/app/website', 'website', 'green'],
   ['Turn a link into posts', 'One link, many posts', '/app/new-post', 'link', 'teal'],
   ['Bee TikTok', 'Long video into TikTok shorts', '/app/bee-tiktok', 'tiktok', 'black'],
-  ['Emulator Free', 'Android emulator on your own PC', '/app/emulator', 'monitor', 'teal'],
   ['Video automation', 'Short videos made on your device', '/app/video-automation', 'video', 'red'],
   ['Shorts Maker', 'Turn a long video into shorts', '/app/shorts-maker', 'shorts', 'orange'],
   ['Video Translator', 'Your voice in any language', '/app/video-translator', 'translate', 'blue'],
   ['Pin Affiliate', 'Earn from Pinterest pins', '/app/pin-affiliate', 'pinterest', 'red'],
   ['Pin Maker', 'Product photo into a tall pin', '/app/pin-maker', 'carousel', 'red'],
   ['Blogger', 'Full articles on your own blog', '/app/blogger', 'blogger', 'orange'],
-  ['Keyword Research', 'What people search, and how hard it is', '/app/keyword-research', 'search', 'blue'],
-  ['AEO Checker', 'Can ChatGPT and Google AI quote you?', '/app/aeo-checker', 'aeo', 'green'],
-  ['Community', 'Ask and share with other users', '/app/community', 'community', 'teal'],
 ]
 
 export default function Home() {
@@ -42,15 +38,7 @@ export default function Home() {
       <MiniStat value={failed} label="Failed, last 30 days" icon={<CircleX size={18} />} color="red" />
     </div>
 
-    <div className="home-tools-grid">{homeTools.map(([title, description, path, icon, color], index) => <Link to={path} className="home-tool-card" key={title}><ToolIcon name={icon} color={color} /><div><h3>{title}</h3><p>{description}</p></div>{[1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(index) && <span className="new-badge">NEW</span>}</Link>)}</div>
-
-    <Card className="home-community" title="From the community" subtitle="What other AlphaPost users are talking about" action={<Link to="/app/community" className="small-link">Open community <ArrowRight size={14} /></Link>}>
-      <div className="home-community-grid">{[
-        ['Naveed SHAH', 'How To Earn Your First $100 with Affiliate Marketing', '2h'],
-        ['Yogesh Sahani', 'What is one tool that saves you time every day?', '4h'],
-        ['Shreya Mehta', 'A simple content routine that finally worked for me', '7h'],
-      ].map(([name, title, time]) => <Link to="/app/community" className="home-community-post" key={title}><div><span className="avatar-dot badge-yellow">{name[0]}</span><span><strong>{name}</strong><small>{time} ago</small></span></div><h4>{title}</h4><footer><span><Heart size={13} /> {title.length % 9}</span><span><MessageSquare size={13} /> {name.length % 5}</span><span>Read <ArrowRight size={13} /></span></footer></Link>)}</div>
-    </Card>
+    <div className="home-tools-grid">{homeTools.map(([title, description, path, icon, color], index) => <Link to={path} className="home-tool-card" key={title}><ToolIcon name={icon} color={color} /><div><h3>{title}</h3><p>{description}</p></div>{[1, 4, 5, 6, 7, 8, 9, 10].includes(index) && <span className="new-badge">NEW</span>}</Link>)}</div>
 
     <DiscoverMore links={['Social media marketing', 'Social posting tool', 'Multi-channel posting']} />
 

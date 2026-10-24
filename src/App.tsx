@@ -13,11 +13,10 @@ import VideoStudio, { BeeTikTok } from './pages/VideoStudio'
 import PinMaker from './pages/PinMaker'
 import PinAffiliate from './pages/PinAffiliate'
 import Blogger from './pages/Blogger'
-import Community from './pages/Community'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
-import { AeoChecker, Emulator, KeywordResearch, LearnEarn, Plans, Trending } from './pages/ToolsPages'
+import { Plans, Trending } from './pages/ToolsPages'
 
 export default function App() {
   return <Routes>
@@ -34,7 +33,6 @@ export default function App() {
       <Route path="trending" element={<Trending />} />
       <Route path="gemini" element={<Gemini />} />
       <Route path="branding" element={<Branding />} />
-      <Route path="learn-earn" element={<LearnEarn />} />
       <Route path="posts" element={<Posts />} />
       <Route path="accounts" element={<Accounts />} />
       <Route path="video-automation" element={<VideoStudio mode="automation" />} />
@@ -43,11 +41,7 @@ export default function App() {
       <Route path="pin-maker" element={<PinMaker />} />
       <Route path="video-translator" element={<VideoStudio mode="translator" />} />
       <Route path="blogger" element={<Blogger />} />
-      <Route path="emulator" element={<Emulator />} />
       <Route path="bee-tiktok" element={<BeeTikTok />} />
-      <Route path="keyword-research" element={<KeywordResearch />} />
-      <Route path="aeo-checker" element={<AeoChecker />} />
-      <Route path="community" element={<Community />} />
       <Route path="profile" element={<Profile />} />
       <Route path="settings" element={<Settings />} />
       <Route path="notifications" element={<Notifications />} />

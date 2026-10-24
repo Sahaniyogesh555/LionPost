@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, PenLine, Zap, Rss, Flame, Sparkles, Image, Play, List, Link2, Video, Scissors, Pin, Wand2, Languages, Bold, Monitor, Music2, Search, BadgeCheck, MessageSquare, X } from 'lucide-react'
+import { Home, PenLine, Zap, Rss, Flame, Sparkles, Image, List, Link2, Video, Scissors, Pin, Languages, Bold, Music2, X } from 'lucide-react'
 import Logo from './Logo'
 
 const navItems = [
@@ -10,7 +10,6 @@ const navItems = [
   { label: 'Trending', path: '/app/trending', icon: Flame, color: 'red' },
   { label: 'Gemini', path: '/app/gemini', icon: Sparkles, color: 'teal' },
   { label: 'Branding', path: '/app/branding', icon: Image, color: 'pink' },
-  { label: 'Learn Earn', path: '/app/learn-earn', icon: Play, color: 'red' },
   { label: 'Posts', path: '/app/posts', icon: List, color: 'blue' },
   { label: 'Accounts', path: '/app/accounts', icon: Link2, color: 'dark' },
   { label: 'Video automation', path: '/app/video-automation', icon: Video, color: 'red' },
@@ -19,11 +18,7 @@ const navItems = [
   { label: 'Pin Maker', path: '/app/pin-maker', icon: Pin, color: 'red', badge: 'NEW' },
   { label: 'Video Translator', path: '/app/video-translator', icon: Languages, color: 'blue', badge: 'NEW' },
   { label: 'Blogger', path: '/app/blogger', icon: Bold, color: 'orange', badge: 'NEW' },
-  { label: 'Emulator Free', path: '/app/emulator', icon: Monitor, color: 'teal', badge: 'NEW' },
   { label: 'Bee TikTok', path: '/app/bee-tiktok', icon: Music2, color: 'black', badge: 'NEW' },
-  { label: 'Keyword Research', path: '/app/keyword-research', icon: Search, color: 'blue', badge: 'NEW' },
-  { label: 'AEO Checker', path: '/app/aeo-checker', icon: BadgeCheck, color: 'green', badge: 'NEW' },
-  { label: 'Community', path: '/app/community', icon: MessageSquare, color: 'teal' },
 ]
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
