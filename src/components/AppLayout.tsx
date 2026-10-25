@@ -25,7 +25,7 @@ export default function AppLayout() {
         <header className="topbar">
           <div className="topbar-profile-wrap">
             <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
-            <Link to="/app/profile" className="topbar-profile"><UserAvatar name={profile.name} photo={profile.photo} size={36} /><span><strong>{profile.name}</strong><small>{profile.email}</small></span></Link>
+            <Link to="/app/profile" className="topbar-profile"><UserAvatar name={profile.name} photo={profile.photo} size={36} /><span><strong>{profile.name || 'Your profile'}</strong><small>{profile.email || 'Set up your profile'}</small></span></Link>
           </div>
           <div className="topbar-actions">
             <Link className="plan-pill" to="/app/plans"><AlphaMark size={31} /><span>Go ad free<small>See plans</small></span><ChevronRight size={14} /></Link>

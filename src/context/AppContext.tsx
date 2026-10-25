@@ -2,53 +2,27 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useLocalStorage, makeId } from '../hooks/useLocalStorage'
 import type { AppNotification, Automation, Post, SocialAccount, ToastMessage, UserProfile } from '../types'
 
-const now = new Date()
-const daysAgo = (days: number, hour = 10) => {
-  const date = new Date(now)
-  date.setDate(date.getDate() - days)
-  date.setHours(hour, 30, 0, 0)
-  return date.toISOString()
-}
-const daysAhead = (days: number, hour = 10) => {
-  const date = new Date(now)
-  date.setDate(date.getDate() + days)
-  date.setHours(hour, 0, 0, 0)
-  return date.toISOString()
-}
-
-const starterPosts: Post[] = [
-  { id: 'post-1', text: '10/20pcs Mixed Pack of Light Pink Heart-Shaped and Bow-Shaped Hair Clips — a sweet little finishing touch for every day.', platforms: ['Pinterest'], status: 'sent', createdAt: daysAgo(0, 9), image: '/assets/workspace.jpg' },
-  { id: 'post-2', text: 'A calm workspace makes room for your best ideas. Save this setup for your next studio refresh.', platforms: ['Pinterest', 'Instagram'], status: 'sent', createdAt: daysAgo(1, 14), image: '/assets/workspace.jpg' },
-  { id: 'post-3', text: 'Five simple habits that make your creative workflow feel lighter. Which one are you trying this week?', platforms: ['TikTok'], status: 'sent', createdAt: daysAgo(2, 11) },
-  { id: 'post-4', text: 'New on the blog: a practical guide to building a content routine you can actually keep.', platforms: ['Pinterest'], status: 'scheduled', createdAt: daysAgo(0, 8), scheduledAt: daysAhead(1, 9) },
-  { id: 'post-5', text: 'Behind the scenes: turning one idea into a week of useful content.', platforms: ['Instagram', 'Facebook'], status: 'scheduled', createdAt: daysAgo(0, 8), scheduledAt: daysAhead(2, 15) },
-]
-
-const starterAccounts: SocialAccount[] = [
-  { id: 'account-1', platform: 'Pinterest', name: 'PinCraftSocial', handle: '@PinCraftSocial', status: 'working' },
-  { id: 'account-2', platform: 'TikTok', name: 'Sahani yogesh555', handle: '@sahaniyogesh555', status: 'working' },
-]
-
-const starterAutomations: Automation[] = [
-  { id: 'auto-pin-1', kind: 'pinterest', name: 'Skincare', detail: 'United States · 12 pins a day · Board: Skincare tips', active: true, createdAt: daysAgo(8), platforms: ['Pinterest'] },
-  { id: 'auto-pin-2', kind: 'pinterest', name: 'Fashion', detail: 'United States · 8 pins a day · Board: Everyday style', active: true, createdAt: daysAgo(12), platforms: ['Pinterest'] },
-  { id: 'auto-pin-3', kind: 'pinterest', name: 'Mix', detail: 'United States · 24 pins a day · Board: Discover', active: false, createdAt: daysAgo(15), platforms: ['Pinterest'] },
-  { id: 'auto-blog-1', kind: 'blogger', name: 'SimpleAI Zone Daily AI Insights', detail: '5 articles a week · With pictures · English', active: true, createdAt: daysAgo(10), platforms: ['Blogger'] },
-]
-
-const starterNotifications: AppNotification[] = [
-  { id: 'note-1', title: 'Your post is live', body: 'Your Pinterest pin was published successfully.', time: '12 min ago', read: false, type: 'success' },
-  { id: 'note-2', title: 'Automation completed', body: 'Fashion published 8 new pins today.', time: '1 hour ago', read: false, type: 'success' },
-  { id: 'note-4', title: 'Your weekly summary is ready', body: 'You published 42 posts across 2 channels this week.', time: 'Yesterday', read: true, type: 'info' },
-]
-
 const defaultProfile: UserProfile = {
-  name: 'Yogesh Sahani',
-  email: 'sahaniyogesh555@gmail.com',
-  about: 'Creator, learner and builder. Sharing useful things every day.',
+  name: '',
+  email: '',
+  about: '',
   website: '',
   phone: '',
-  country: 'Nepal',
+  country: '',
+}
+
+// Remove only the fixed records shipped by the original demo. User-created
+// records have timestamped IDs and are left untouched.
+const legacyDemoIds = {
+  posts: new Set(['post-1', 'post-2', 'post-3', 'post-4', 'post-5']),
+  accounts: new Set(['account-1', 'account-2']),
+  automations: new Set(['auto-pin-1', 'auto-pin-2', 'auto-pin-3', 'auto-blog-1']),
+  notifications: new Set(['note-1', 'note-2', 'note-3', 'note-4']),
+}
+
+function withoutLegacyDemoData<T extends { id: string }>(items: T[], ids: Set<string>) {
+  const filtered = items.filter((item) => !ids.has(item.id))
+  return filtered.length === items.length ? items : filtered
 }
 
 interface AppContextValue {
@@ -80,10 +54,10 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [posts, setPosts] = useLocalStorage<Post[]>('alphapost-posts', starterPosts)
-  const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>('alphapost-accounts', starterAccounts)
-  const [automations, setAutomations] = useLocalStorage<Automation[]>('alphapost-automations', starterAutomations)
-  const [notifications, setNotifications] = useLocalStorage<AppNotification[]>('alphapost-notifications', starterNotifications)
+  const [posts, setPosts] = useLocalStorage<Post[]>('alphapost-posts', [])
+  const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>('alphapost-accounts', [])
+  const [automations, setAutomations] = useLocalStorage<Automation[]>('alphapost-automations', [])
+  const [notifications, setNotifications] = useLocalStorage<AppNotification[]>('alphapost-notifications', [])
   const [profile, setProfile] = useLocalStorage<UserProfile>('alphapost-profile', defaultProfile)
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('alphapost-theme', 'light')
   const [toasts, setToasts] = useState<ToastMessage[]>([])
@@ -93,11 +67,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [theme])
 
   useEffect(() => {
+    setPosts((items) => withoutLegacyDemoData(items, legacyDemoIds.posts))
+    setAccounts((items) => withoutLegacyDemoData(items, legacyDemoIds.accounts))
+    setAutomations((items) => withoutLegacyDemoData(items, legacyDemoIds.automations))
     setNotifications((items) => {
-      const filtered = items.filter((item) => !/community/i.test(`${item.title} ${item.body}`))
-      return filtered.length === items.length ? items : filtered
+      const withoutDemo = withoutLegacyDemoData(items, legacyDemoIds.notifications)
+      const filtered = withoutDemo.filter((item) => !/community/i.test(`${item.title} ${item.body}`))
+      return filtered.length === withoutDemo.length ? withoutDemo : filtered
     })
-  }, [setNotifications])
+    setProfile((current) => {
+      const isLegacyDemoProfile = current.name === 'Yogesh Sahani' && current.email === 'sahaniyogesh555@gmail.com'
+      return isLegacyDemoProfile ? { ...defaultProfile, photo: current.photo } : current
+    })
+  }, [setPosts, setAccounts, setAutomations, setNotifications, setProfile])
 
   const dismissToast = useCallback((id: string) => {
     setToasts((items) => items.filter((item) => item.id !== id))

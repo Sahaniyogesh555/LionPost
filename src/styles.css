@@ -551,6 +551,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255, 194, 20, .5
 .branding-preview-column { display: flex; flex-direction: column; gap: 14px; }
 .brand-photo-preview { position: relative; width: 220px; max-width: 100%; aspect-ratio: 4 / 5; margin: 8px auto 18px; border-radius: 10px; overflow: hidden; background: #ddd; box-shadow: var(--shadow); }
 .brand-photo-preview > img { width: 100%; height: 100%; object-fit: cover; }
+.brand-photo-placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(145deg, var(--surface-2), var(--surface-3)); color: var(--muted); font-size: 11px; }
 .preview-name { position: absolute; left: 8px; top: 8px; padding: 3px 7px; border-radius: 3px; font-size: 8px; font-weight: 900; }
 .preview-bar { position: absolute; left: 7px; right: 7px; bottom: 8px; border-radius: 4px; padding: 6px; text-align: center; font-size: 8px; font-weight: 900; box-shadow: 0 2px 0 rgba(0,0,0,.15); }
 .brand-design-preview { position: relative; width: 220px; max-width: 100%; aspect-ratio: 4 / 5; margin: 8px auto; border-radius: 10px; background: linear-gradient(145deg, #fff0e5, #f6b9aa); overflow: hidden; padding: 15px; }
@@ -666,6 +667,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255, 194, 20, .5
 .text-design-preview { width: 150px; text-align: center; }
 .text-design-preview > div { position: relative; height: 220px; border-radius: 10px; overflow: hidden; background: #222; }
 .text-design-preview img { width: 100%; height: 100%; object-fit: cover; filter: brightness(.65); }
+.text-design-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(145deg, #353128, #171713); color: #8f8979; }
+.text-design-placeholder svg { width: 44px; height: 44px; }
 .text-design-preview > div strong { position: absolute; left: 7px; right: 7px; top: 20px; color: white; font-size: 12px; }
 .text-design-preview > div span { position: absolute; left: 7px; right: 7px; bottom: 20px; color: white; font-size: 8px; }
 .text-design-preview h4 { font-size: 11px; margin: 7px 0; }

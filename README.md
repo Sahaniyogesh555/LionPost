@@ -20,7 +20,7 @@ npm run preview
 
 ## Included screens
 
-- Public landing page with tools, publishing statistics, FAQ, and calls to action
+- Public landing page with tools, FAQ, and calls to action
 - Login and account creation with client-side validation
 - Home dashboard with live post/account counts, quick tools, upcoming posts, and recent activity
 - New Post composer with account selection, media upload, first comment, send-now, and scheduling
@@ -38,7 +38,7 @@ npm run preview
 
 ## Data and integrations
 
-The app is a fully interactive front-end implementation. Demo account data, posts, preferences, automations, and history are stored in browser `localStorage`. No credentials are transmitted to a server.
+The app is a fully interactive front-end implementation. It starts with no posts, connected accounts, automations, blogs, Gemini keys, or notifications. Data users create is stored in browser `localStorage`; legacy fixed demo records are removed automatically while user-created records are preserved. No credentials are transmitted to a server.
 
 Real social-network OAuth/publishing, Gemini API generation, AliExpress/Blogger APIs, and server-side AI video rendering require production credentials and backend services. The UI is structured so those integrations can be connected next.
 

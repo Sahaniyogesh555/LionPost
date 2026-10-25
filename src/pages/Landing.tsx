@@ -44,13 +44,6 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="live-stats" aria-label="AlphaPost publishing statistics">
-          <span className="live-label"><i /> LIVE NUMBERS <small>from AlphaPost right now</small></span>
-          <div className="stats-grid">
-            {[[String(tools.length), 'free tools'], ['104,010+', 'articles published'], ['57,960+', 'posts sent'], ['8,430+', 'videos made'], ['118', 'countries']].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
-          </div>
-        </section>
-
         <section className="landing-section tools-section" id="tools">
           <div className="section-heading"><h2>Everything AlphaPost does</h2><p>{tools.length} free tools on one account, and each one has its own job.</p></div>
           <div className="landing-tools-grid">{tools.map((tool) => <Link to={tool.path} className="landing-tool-card" key={tool.name}><ToolIcon name={tool.icon} color={tool.color} /><div><h3>{tool.name} {tool.badge && <span className="new-badge">{tool.badge}</span>}</h3><p>{tool.description}</p></div><ArrowRight size={15} /></Link>)}</div>

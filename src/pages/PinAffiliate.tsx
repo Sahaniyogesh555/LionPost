@@ -9,7 +9,7 @@ import { downloadText } from '../utils'
 export default function PinAffiliate() {
   const { automations, addAutomation, notify } = useApp()
   const pins = automations.filter((item) => item.kind === 'pinterest')
-  const [keysAdded, setKeysAdded] = useState(true)
+  const [credentials, setCredentials] = useState<{ mask: string; tracking: string } | null>(null)
   const [modal, setModal] = useState<'keys' | 'automation' | null>(null)
   const [key, setKey] = useState('')
   const [secret, setSecret] = useState('')
@@ -21,7 +21,8 @@ export default function PinAffiliate() {
   const saveKeys = (event: FormEvent) => {
     event.preventDefault()
     if (!key || !secret || !tracking) return notify('Fill in all three AliExpress values.', 'error')
-    setKeysAdded(true); setModal(null); setKey(''); setSecret(''); setTracking(''); notify('AliExpress keys connected.')
+    setCredentials({ mask: `•••• ${key.slice(-4)}`, tracking })
+    setModal(null); setKey(''); setSecret(''); setTracking(''); notify('AliExpress keys connected.')
   }
   const createAutomation = (event: FormEvent) => {
     event.preventDefault()
@@ -33,9 +34,9 @@ export default function PinAffiliate() {
   return <div className="pin-affiliate-page">
     <PageHeader title="Pin Affiliate" subtitle="Real AliExpress products, your affiliate link, posted for you." />
     <ToolHero title="Earn from Pinterest while you sleep" description="Connect your Pinterest board, add your AliExpress affiliate keys and pick a subject. AlphaPost finds real products, writes the pin and posts it with your affiliate link, all day, by itself." icon={<ShoppingBag />} badges={['Real products', 'Your affiliate link', 'Automatic pinning']} theme="yellow" />
-    <Card className="affiliate-keys-card" title="Your AliExpress keys" subtitle="Your own keys, so every sale is yours." action={<span className="icon-badge badge-green"><KeyRound /></span>}>{keysAdded ? <div className="keys-connected"><span><CheckCircle2 /> Keys added and working</span><small>App key •••• 9402 · Tracking ID: AlphaPost</small><Button size="sm" variant="secondary" onClick={() => setModal('keys')}>Change</Button><Button size="sm" variant="danger" onClick={() => { setKeysAdded(false); notify('AliExpress keys removed.', 'info') }}>Remove</Button></div> : <Button icon={<Plus size={15} />} onClick={() => setModal('keys')}>Add AliExpress keys</Button>}</Card>
+    <Card className="affiliate-keys-card" title="Your AliExpress keys" subtitle="Your own keys, so every sale is yours." action={<span className="icon-badge badge-green"><KeyRound /></span>}>{credentials ? <div className="keys-connected"><span><CheckCircle2 /> Keys added</span><small>App key {credentials.mask} · Tracking ID: {credentials.tracking}</small><Button size="sm" variant="secondary" onClick={() => setModal('keys')}>Change</Button><Button size="sm" variant="danger" onClick={() => { setCredentials(null); notify('AliExpress keys removed.', 'info') }}>Remove</Button></div> : <Button icon={<Plus size={15} />} onClick={() => setModal('keys')}>Add AliExpress keys</Button>}</Card>
     <Card className="automation-limit"><CheckCircle2 /><div><strong>You have {pins.length} pin automations</strong><p>{pins.length >= 3 ? 'That is the most allowed. Edit or delete one below to make another.' : 'Choose real products and let AlphaPost pin them for you.'}</p></div>{pins.length < 3 && <Button size="sm" onClick={() => setModal('automation')}>Add automation</Button>}</Card>
-    <section><div className="section-title-line"><h2>Your pin automations</h2><span className="count-pill">{pins.length} of 3</span></div><div className="automation-list">{pins.map((item) => <AutomationCard key={item.id} automation={item} />)}</div></section>
+    <section><div className="section-title-line"><h2>Your pin automations</h2><span className="count-pill">{pins.length} of 3</span></div>{pins.length ? <div className="automation-list">{pins.map((item) => <AutomationCard key={item.id} automation={item} />)}</div> : <Card><div className="inline-empty">No pin automations yet.</div></Card>}</section>
     <p className="helper-text">Every pin also shows in <a href="/app/posts">Posts</a>.</p>
     <Card className="affiliate-guide" title="How to get your 3 AliExpress keys" subtitle="About 15 minutes, one time, free.">
       {[

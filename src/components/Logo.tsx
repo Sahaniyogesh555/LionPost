@@ -18,7 +18,7 @@ export default function Logo({ to = '/', compact = false, size = 38 }: { to?: st
 }
 
 export function UserAvatar({ name, photo, size = 38 }: { name: string; photo?: string; size?: number }) {
-  const initials = name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+  const initials = name.trim() ? name.trim().split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() : 'α'
   return (
     <span className="user-avatar" style={{ width: size, height: size, fontSize: size * 0.32 }}>
       {photo ? <img src={photo} alt={name} /> : initials}
