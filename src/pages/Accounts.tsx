@@ -3,7 +3,7 @@ import { CheckCircle2, Link2, Plus, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import AccountCards from '../components/AccountCards'
 import PlatformIcon from '../components/PlatformIcon'
-import { Button, Card, DiscoverMore, Field, Modal, PageHeader } from '../components/UI'
+import { Button, Card, Field, Modal, PageHeader } from '../components/UI'
 import type { Platform } from '../types'
 
 export default function Accounts() {
@@ -31,7 +31,6 @@ export default function Accounts() {
     <Card className="all-accounts-card" title="All your accounts" action={<span className="count-pill">{accounts.length}</span>}>
       {accounts.length ? <div className="connected-account-list">{accounts.map((account) => <div className="connected-account" key={account.id}><PlatformIcon platform={account.platform} size="sm" /><div><strong>{account.handle}</strong><small>{account.name} · {account.platform}</small></div><span className="working-badge"><CheckCircle2 size={13} /> Working</span><button className="icon-button subtle-danger" onClick={() => { removeAccount(account.id); notify('Account disconnected.', 'info') }} aria-label={`Remove ${account.handle}`}><Trash2 size={15} /></button></div>)}</div> : <div className="inline-empty">No accounts connected yet.</div>}
     </Card>
-    <DiscoverMore />
     <Modal open={!!platform} onClose={() => setPlatform(null)} title={`Connect ${platform || ''}`}>
       <form onSubmit={submit} className="modal-form">
         <div className="modal-platform-intro">{platform && <PlatformIcon platform={platform} size="lg" />}<p>Add your {platform} account details. In this demo, your connection is saved only in this browser.</p></div>

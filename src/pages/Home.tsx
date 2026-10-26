@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext'
 import AccountCards from '../components/AccountCards'
 import PlatformIcon from '../components/PlatformIcon'
 import ToolIcon from '../components/ToolIcon'
-import { Button, Card, DiscoverMore, MiniStat, PageHeader } from '../components/UI'
+import { Button, Card, MiniStat, PageHeader } from '../components/UI'
 import { formatDate, relativeDate } from '../utils'
 
 const homeTools = [
@@ -42,8 +42,6 @@ export default function Home() {
     </div>
 
     <div className="home-tools-grid">{homeTools.map(([title, description, path, icon, color], index) => <Link to={path} className="home-tool-card" key={title}><ToolIcon name={icon} color={color} /><div><h3>{title}</h3><p>{description}</p></div>{[1, 4, 5, 6, 7, 8, 9, 10].includes(index) && <span className="new-badge">NEW</span>}</Link>)}</div>
-
-    <DiscoverMore links={['Social media marketing', 'Social posting tool', 'Multi-channel posting']} />
 
     <section className="home-section"><div className="section-title-line"><h2>Your social accounts</h2><Link to="/app/accounts">See all</Link></div><AccountCards accounts={accounts} /></section>
 

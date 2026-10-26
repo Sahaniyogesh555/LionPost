@@ -1,7 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
-import { ArrowLeft, Check, CheckCircle2, ChevronRight, Info, X, XCircle } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, Info, X, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { discoverLinks } from '../data/tools'
 import { useApp } from '../context/AppContext'
 
 export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'blue' | 'dark'; size?: 'sm' | 'md' | 'lg'; icon?: ReactNode }>(
@@ -65,18 +64,6 @@ export function Modal({ open, onClose, title, children, className = '' }: { open
 
 export function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: string; text: string; action?: ReactNode }) {
   return <div className="empty-state"><IconBadge size="lg">{icon}</IconBadge><h3>{title}</h3><p>{text}</p>{action}</div>
-}
-
-export function DiscoverMore({ links = discoverLinks }: { links?: string[] }) {
-  const { notify } = useApp()
-  return (
-    <div className="discover-wrap">
-      <span className="ad-label">ADVERTISEMENT</span>
-      <Card className="discover-card" title="Discover more">
-        <div className="discover-links">{links.map((link) => <button key={link} onClick={() => notify(`${link} opened in discovery mode.`, 'info')}>{link}<ChevronRight size={16} /></button>)}</div>
-      </Card>
-    </div>
-  )
 }
 
 export function Toasts() {

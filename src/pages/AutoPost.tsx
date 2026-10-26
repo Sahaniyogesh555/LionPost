@@ -4,7 +4,7 @@ import { Bot, CalendarClock, Check, Globe2, MessageSquare, Plus, Rss, Send, Spar
 import { useApp } from '../context/AppContext'
 import AutomationCard from '../components/AutomationCard'
 import PlatformIcon from '../components/PlatformIcon'
-import { Button, Card, CheckBox, DiscoverMore, Field, IconBadge, PageHeader, StepNumber } from '../components/UI'
+import { Button, Card, CheckBox, Field, IconBadge, PageHeader, StepNumber } from '../components/UI'
 import type { Platform } from '../types'
 
 export function AutoPost() {
@@ -17,7 +17,6 @@ export function AutoPost() {
       <Link to="/app/auto-post/ai" className="choice-card"><IconBadge size="lg"><Sparkles size={23} /></IconBadge><h2>AI writes for me</h2><p>Tell it your topic once. It writes fresh posts with pictures and sends them all day.</p><span>Make an AI automation <Zap size={15} /></span></Link>
       <Link to="/app/auto-post/website" className="choice-card"><IconBadge size="lg"><Rss size={23} /></IconBadge><h2>Share from my website</h2><p>Every new article on your WordPress, Blogger or other site goes out by itself.</p><span>Connect a website <Globe2 size={15} /></span></Link>
     </div>
-    <DiscoverMore />
   </div>
 }
 
@@ -28,7 +27,6 @@ export function Website() {
     <PageHeader title="Share from my website" subtitle="Every new article on your site goes to your social accounts by itself." icon={<Rss />} action={<Link to="/app/auto-post/website" className="button button-primary button-md"><Plus size={16} /> Add my website</Link>} />
     <Card className="website-autopilot-card"><IconBadge size="lg"><Globe2 /></IconBadge><div><h2>Put your website on autopilot</h2><ul><li><Check /> WordPress, Blogger, or any site with an RSS feed or sitemap</li><li><Check /> Each new article is shared with its picture and link</li><li><Check /> AI can write a short caption in your language</li></ul><Link to="/app/auto-post/website" className="button button-primary button-md"><Plus size={16} /> Add my website</Link></div></Card>
     {websites.length > 0 && <div className="automation-list">{websites.map((item) => <AutomationCard key={item.id} automation={item} />)}</div>}
-    <DiscoverMore links={['Take Music Lessons', 'Tour Colleges', 'Try Microblogs']} />
   </div>
 }
 

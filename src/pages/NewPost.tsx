@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { CalendarClock, Check, FileImage, ImagePlus, Link2, MessageSquare, Plus, Send, Sparkles, Upload, X, Zap } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import PlatformIcon from '../components/PlatformIcon'
-import { Button, Card, CheckBox, DiscoverMore, Field, IconBadge, PageHeader } from '../components/UI'
+import { Button, Card, CheckBox, Field, IconBadge, PageHeader } from '../components/UI'
 import { readFileAsDataUrl } from '../utils'
 
 export default function NewPost() {
@@ -92,6 +92,5 @@ export default function NewPost() {
         </Card>
       </div>
     </form>
-    <DiscoverMore />
   </div>
 }

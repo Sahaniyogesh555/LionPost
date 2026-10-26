@@ -208,15 +208,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255, 194, 20, .5
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
 
-.discover-wrap { margin: 26px 0 20px; }
-.ad-label { display: block; text-align: center; font-size: 8px; letter-spacing: 1.5px; color: var(--faint); margin-bottom: 9px; }
-.discover-card { padding: 0; overflow: hidden; }
-.discover-card .card-header { padding: 12px 15px 10px; margin: 0; background: linear-gradient(90deg, #edf4ff, var(--surface)); }
-.discover-card .card-header h2 { font-size: 13px; font-weight: 600; color: #6f84a2; }
-.discover-links { display: grid; grid-template-columns: repeat(3, 1fr); }
-.discover-links button { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; font-size: 12px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); }
-.discover-links button:last-child { border-right: 0; }
-.discover-links button:hover { background: var(--surface-2); }
 
 /* ---------- Platform icons ---------- */
 .platform-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 50%; color: white; font-family: Arial, sans-serif; font-weight: 800; border: 1px solid rgba(0,0,0,.09); box-shadow: inset 0 1px 2px rgba(255,255,255,.4), 0 3px 0 rgba(0,0,0,.13), 0 5px 10px rgba(0,0,0,.1); line-height: 1; }
@@ -1034,8 +1025,6 @@ td strong { font-size: 11px; }
   .home-tool-card .icon-badge { width: 31px; height: 31px; }
   .home-community-grid { grid-template-columns: 1fr; }
   .home-community-post h4 { height: auto; }
-  .discover-links { grid-template-columns: 1fr; }
-  .discover-links button { border-right: 0; }
   .account-platform-grid { grid-template-columns: 1fr; gap: 28px; }
   .form-side-column { display: flex; }
   .two-choice-grid { grid-template-columns: 1fr; }

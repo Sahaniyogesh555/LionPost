@@ -22,5 +22,3 @@ export const tools: ToolDefinition[] = [
   { name: 'TikTok auto post', description: 'Turn long videos into clips and post them to TikTok.', path: '/app/bee-tiktok', icon: 'tiktok', color: 'black' },
   { name: 'YouTube and Dailymotion', description: 'Share your videos to more places automatically.', path: '/app/accounts', icon: 'youtube', color: 'red' },
 ]
-
-export const discoverLinks = ['Get Writing Tools', 'Learn DIY Skills', 'Browse Art Prints']
