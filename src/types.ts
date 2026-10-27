@@ -29,6 +29,12 @@ export interface Automation {
   active: boolean
   createdAt: string
   platforms: Platform[]
+  topic?: string
+  language?: string
+  sourceUrl?: string
+  seenIds?: string[]
+  lastRunAt?: string
+  aiCaption?: boolean
 }
 
 export interface UserProfile {

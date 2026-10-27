@@ -1,10 +1,11 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CalendarClock, Check, FileImage, ImagePlus, Link2, MessageSquare, Plus, Send, Sparkles, Upload, X, Zap } from 'lucide-react'
+import { CalendarClock, Check, FileImage, Link2, MessageSquare, Plus, Send, Sparkles, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import PlatformIcon from '../components/PlatformIcon'
 import { Button, Card, CheckBox, Field, IconBadge, PageHeader } from '../components/UI'
 import { readFileAsDataUrl } from '../utils'
+import { generateSocialDraft } from '../services/gemini'
 
 export default function NewPost() {
   const { accounts, addPost, notify } = useApp()
@@ -18,13 +19,14 @@ export default function NewPost() {
   const [branding, setBranding] = useState(true)
   const [firstComment, setFirstComment] = useState(false)
   const [comment, setComment] = useState('')
-  const [when, setWhen] = useState<'now' | 'later'>('now')
+  const [when, setWhen] = useState<'draft' | 'later'>('draft')
   const [schedule, setSchedule] = useState(() => {
     const date = new Date(Date.now() + 86400000)
     date.setMinutes(0, 0, 0)
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
   })
   const [error, setError] = useState('')
+  const [generating, setGenerating] = useState(false)
 
   const upload = async (file?: File) => {
     if (!file) return
@@ -46,19 +48,26 @@ export default function NewPost() {
     if (!text.trim() && !media) return setError('Write something or add a photo first.')
     if (!chosenAccounts.length) return setError('Choose at least one account to post to.')
     if (when === 'later' && !schedule) return setError('Pick a date and time for your post.')
-    addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: when === 'now' ? 'sent' : 'scheduled', scheduledAt: when === 'later' ? new Date(schedule).toISOString() : undefined, image: mediaType === 'image' ? media || undefined : undefined, firstComment: firstComment ? comment : undefined })
-    notify(when === 'now' ? 'Your post was sent successfully.' : 'Your post is scheduled.')
+    addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: when === 'later' ? 'scheduled' : 'draft', scheduledAt: when === 'later' ? new Date(schedule).toISOString() : undefined, image: mediaType === 'image' ? media || undefined : undefined, firstComment: firstComment ? comment : undefined })
+    notify(when === 'later' ? 'Post saved to your local schedule. Automatic publishing is not connected.' : 'Draft saved in this browser.')
     navigate('/app/posts')
   }
 
-  const generateText = () => {
-    const ideas = [
-      'Small steps, shared consistently, become something remarkable. What are you working on today? ✨',
-      'A little behind the scenes from today. Creating is messy, joyful and always worth it. #CreatorLife',
-      'Save this for later: three simple ways to make your content more useful — teach one thing, show one example, and leave one clear next step.',
-    ]
-    setText(ideas[Math.floor(Math.random() * ideas.length)])
-    notify('A fresh writing idea is ready.', 'info')
+  const generateText = async () => {
+    setGenerating(true)
+    setError('')
+    try {
+      const topic = text.trim() || 'a practical, timely insight for people who create and publish online'
+      const result = await generateSocialDraft(topic)
+      setText(result)
+      notify('Gemini wrote a new post draft.')
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Gemini could not write this post.'
+      setError(message)
+      notify(message, 'error')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return <div className="new-post-page">
@@ -66,7 +75,7 @@ export default function NewPost() {
     <form className="two-column-form" onSubmit={submit}>
       <div className="form-main-column">
         <Card className="form-card" title="Your post" subtitle="Write it once. Add photos or videos. Pick where it goes." action={<IconBadge color="yellow"><Sparkles size={18} /></IconBadge>}>
-          <div className="field-heading-row"><Field label="Post text" /><button type="button" className="ai-write-button" onClick={generateText}><Sparkles size={14} /> Write an idea</button></div>
+          <div className="field-heading-row"><Field label="Post text" /><button type="button" className="ai-write-button" onClick={generateText} disabled={generating}>{generating ? <span className="spinner" /> : <Sparkles size={14} />} {generating ? 'Writing with Gemini…' : 'Write with Gemini'}</button></div>
           <textarea className="post-textarea" value={text} onChange={(event) => setText(event.target.value)} placeholder="What do you want to say?" maxLength={2200} />
           <div className="character-row"><span>Each platform cuts long text at a word by itself.</span><span>{text.length} / 2200</span></div>
           {media ? <div className="upload-preview">{mediaType === 'video' ? <video src={media} controls /> : <img src={media} alt="Upload preview" />}<button type="button" onClick={() => setMedia('')}><X size={16} /></button></div> : <button type="button" className="upload-dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files[0]) }}><IconBadge size="lg"><Plus size={23} /></IconBadge><strong>Add photos and videos</strong><span>One file makes one post. Many files make many posts, each at its own time. Up to 20.</span></button>}
@@ -85,10 +94,11 @@ export default function NewPost() {
           {firstComment && <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write your first comment…" />}
         </Card>
         <Card className="form-card when-card" title="When" subtitle="Now, or pick a time." action={<IconBadge color="green"><CalendarClock size={18} /></IconBadge>}>
-          <div className="segmented-control"><button type="button" className={when === 'now' ? 'active' : ''} onClick={() => setWhen('now')}><Zap size={15} /> Send now</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Pick a time</button></div>
+          <div className="segmented-control"><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Save a draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Plan a time</button></div>
           {when === 'later' && <Field label="Date and time"><input type="datetime-local" value={schedule} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setSchedule(event.target.value)} /></Field>}
+          <p className="helper-text">Drafts and schedules are stored in this browser. This preview does not publish to social networks automatically.</p>
           {error && <div className="form-error">{error}</div>}
-          <Button type="submit" size="lg" icon={when === 'now' ? <Send size={17} /> : <CalendarClock size={17} />}>{when === 'now' ? 'Send post' : 'Schedule post'}</Button>
+          <Button type="submit" size="lg" icon={when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
         </Card>
       </div>
     </form>

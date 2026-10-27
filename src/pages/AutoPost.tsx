@@ -6,6 +6,7 @@ import AutomationCard from '../components/AutomationCard'
 import PlatformIcon from '../components/PlatformIcon'
 import { Button, Card, CheckBox, Field, IconBadge, PageHeader, StepNumber } from '../components/UI'
 import type { Platform } from '../types'
+import { readWebsiteFeed, type FeedResult } from '../services/feeds'
 
 export function AutoPost() {
   const { automations } = useApp()
@@ -57,15 +58,53 @@ export function AutoPostForm({ type }: { type: 'ai' | 'website' }) {
   const [from, setFrom] = useState('08:00')
   const [until, setUntil] = useState('22:00')
   const [error, setError] = useState('')
+  const [preview, setPreview] = useState<FeedResult | null>(null)
+  const [previewing, setPreviewing] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-  const submit = (event: FormEvent) => {
+  const previewWebsite = async () => {
+    if (!subject.trim()) return setError('Add your website address first.')
+    setPreviewing(true)
+    setError('')
+    try {
+      const result = await readWebsiteFeed(subject.trim())
+      setPreview(result)
+      notify(`${result.items.length} articles found through ${result.kind.toUpperCase()}.`, 'info')
+    } catch (caught) {
+      setPreview(null)
+      setError(caught instanceof Error ? caught.message : 'The website feed could not be read.')
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!name.trim() || !subject.trim()) return setError(isAI ? 'Add a name and tell AI what to post about.' : 'Add a name and your website address.')
     const chosen = accounts.filter((account) => selected.includes(account.id))
     if (!chosen.length) return setError('Choose at least one social account.')
-    addAutomation({ kind: type, name, detail: isAI ? `${subject} · ${postsPerDay} · ${language} · ${length} posts` : `${subject} · ${postsPerDay} · AI captions ${aiCaption ? 'on' : 'off'}`, platforms: chosen.map((account) => account.platform) })
-    notify('Your auto post is up and running.')
-    navigate(isAI ? '/app/auto-post' : '/app/website')
+    setSaving(true)
+    setError('')
+    try {
+      const feed = isAI ? null : await readWebsiteFeed(subject.trim())
+      addAutomation({
+        kind: type,
+        name: name.trim(),
+        detail: isAI ? `${subject} · ${postsPerDay} · ${language} · ${length} posts` : `${feed?.title || subject} · ${postsPerDay} · AI captions ${aiCaption ? 'on' : 'off'}`,
+        platforms: chosen.map((account) => account.platform),
+        topic: subject.trim(),
+        language,
+        sourceUrl: feed?.source,
+        seenIds: feed?.items.map((item) => item.id) || [],
+        aiCaption: isAI ? undefined : aiCaption,
+      })
+      notify(isAI ? 'Your AI draft automation is ready.' : 'Live feed connected. Current articles were marked as seen, so only new articles will be imported.')
+      navigate(isAI ? '/app/auto-post' : '/app/website')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'The automation could not be created.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return <div>
@@ -74,7 +113,9 @@ export function AutoPostForm({ type }: { type: 'ai' | 'website' }) {
       <div className="form-main-column">
         <Card className="form-card" title={isAI ? 'What to post' : 'Your website'} subtitle={isAI ? 'Tell the AI your subject. It writes every post for you.' : 'Every new article goes out by itself.'} action={<IconBadge><Rss size={18} /></IconBadge>}>
           <Field label="Name" hint="Only for you, to tell your auto posts apart."><input value={name} onChange={(event) => setName(event.target.value)} placeholder={isAI ? 'Daily crypto news' : 'My blog'} /></Field>
-          <Field label={isAI ? 'What should the posts be about?' : 'Website address'} hint={isAI ? 'For example: crypto news and new airdrops. Or: easy healthy recipes for busy mothers. You can write in any language.' : 'WordPress, Blogger or any site with an RSS feed. We find the feed for you.'}>{isAI ? <textarea value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Daily crypto news and new airdrops. Keep it useful and easy to understand." /> : <input type="url" value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="https://myblog.com" />}</Field>
+          <Field label={isAI ? 'What should the posts be about?' : 'Website address'} hint={isAI ? 'For example: crypto news and new airdrops. Or: easy healthy recipes for busy mothers. You can write in any language.' : 'WordPress, Blogger, RSS, Atom, or a sitemap. We discover the source and read the real articles.'}>{isAI ? <textarea value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Daily crypto news and new airdrops. Keep it useful and easy to understand." /> : <input type="url" value={subject} onChange={(event) => { setSubject(event.target.value); setPreview(null) }} placeholder="https://myblog.com" />}</Field>
+          {!isAI && <div className="feed-connect-row"><Button type="button" size="sm" variant="secondary" icon={<Rss size={14} />} onClick={previewWebsite} disabled={previewing}>{previewing ? 'Reading website…' : 'Find real articles'}</Button>{preview && <span className="working-badge">{preview.kind.toUpperCase()} connected</span>}</div>}
+          {preview && <div className="feed-preview"><div><strong>{preview.title}</strong><small>{preview.items.length} articles found · Existing items will be marked as seen</small></div>{preview.items.slice(0, 3).map((item) => <article key={item.id}><div><strong>{item.title}</strong>{item.summary && <p>{item.summary}</p>}<small>{item.published ? new Date(item.published).toLocaleString() : 'Found in feed'}</small></div>{item.image && <img src={item.image} alt="" />}</article>)}</div>}
           {isAI ? <>
             <Field label="Language"><select value={language} onChange={(event) => setLanguage(event.target.value)}><option>English</option><option>Nepali</option><option>Hindi</option><option>Spanish</option><option>French</option><option>German</option></select></Field>
             <Field label="Post length" hint="30 to 60, 60 to 110, or 120 to 180 words."><select value={length} onChange={(event) => setLength(event.target.value)}><option>Short</option><option>Medium</option><option>Long</option></select></Field>
@@ -107,7 +148,7 @@ export function AutoPostForm({ type }: { type: 'ai' | 'website' }) {
           <div className="field-grid-2"><Field label="Post from"><input type="time" value={from} onChange={(event) => setFrom(event.target.value)} /></Field><Field label="Until"><input type="time" value={until} onChange={(event) => setUntil(event.target.value)} /></Field></div>
           <p className="helper-text">Your local time. Times are a little random each day so the account does not look like a robot.</p>
           {error && <div className="form-error">{error}</div>}
-          <Button type="submit" size="lg" icon={<Zap size={17} />}>Start auto post</Button>
+          <Button type="submit" size="lg" icon={<Zap size={17} />} disabled={saving}>{saving ? 'Connecting…' : isAI ? 'Start AI draft automation' : 'Connect live website feed'}</Button>
         </Card>
       </div>
     </form>

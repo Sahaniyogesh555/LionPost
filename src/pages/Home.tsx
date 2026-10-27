@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { ArrowRight, CalendarClock, CheckCircle2, CircleX, Clock3, Link2, Plus, Send, TrendingUp } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
@@ -6,6 +7,7 @@ import PlatformIcon from '../components/PlatformIcon'
 import ToolIcon from '../components/ToolIcon'
 import { Button, Card, MiniStat, PageHeader } from '../components/UI'
 import { formatDate, relativeDate } from '../utils'
+import { readLiveTrends, type FeedItem } from '../services/feeds'
 
 const homeTools = [
   ['Post from my gallery', 'Photo, video or text, now or later', '/app/new-post', 'image', 'blue'],
@@ -31,6 +33,21 @@ export default function Home() {
   const failed = recentPosts.filter((post) => post.status === 'failed').length
   const latest = posts.filter((post) => post.status === 'sent').slice(0, 5)
   const firstName = profile.name.trim().split(' ')[0]
+  const [trends, setTrends] = useState<FeedItem[]>([])
+  const [trendsLoading, setTrendsLoading] = useState(true)
+  const [trendsError, setTrendsError] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    readLiveTrends('United States').then((result) => {
+      if (active) setTrends(result.items.slice(0, 6))
+    }).catch(() => {
+      if (active) setTrendsError(true)
+    }).finally(() => {
+      if (active) setTrendsLoading(false)
+    })
+    return () => { active = false }
+  }, [])
 
   return <div className="home-page">
     <PageHeader title={firstName ? `Hi ${firstName}` : 'Welcome'} subtitle="Here is how your posts are doing." action={<Button icon={<Plus size={17} />} onClick={() => navigate('/app/new-post')}>New post</Button>} />
@@ -45,8 +62,8 @@ export default function Home() {
 
     <section className="home-section"><div className="section-title-line"><h2>Your social accounts</h2><Link to="/app/accounts">See all</Link></div><AccountCards accounts={accounts} /></section>
 
-    <Card className="trending-preview" title="Trending now" subtitle="Live topics will appear here when a trends source is available." action={<Link to="/app/trending" className="small-link">See all</Link>}>
-      <div className="inline-empty">No live trending topics available.</div>
+    <Card className="trending-preview" title="Trending now" subtitle="Live Google Trends in United States" action={<Link to="/app/trending" className="small-link">See all</Link>}>
+      {trendsLoading ? <div className="inline-empty">Loading live trends…</div> : trendsError ? <div className="inline-empty">Live trends are unavailable right now. <Link to="/app/trending">Try the trends page</Link></div> : <div className="trend-chip-list">{trends.map((item) => <button key={item.id} onClick={() => navigate('/app/new-post', { state: { text: `${item.title}: ` } })}>{item.title}{item.traffic ? ` · ${item.traffic}` : ''}</button>)}</div>}
     </Card>
 
     <section className="home-section"><div className="section-title-line"><h2>Coming up</h2><Link to="/app/posts">All posts</Link></div><Card>{scheduled.length === 0 ? <div className="inline-empty">Nothing waiting. <Link to="/app/new-post">Plan a post</Link></div> : <div className="compact-post-list">{scheduled.slice(0, 3).map((post) => <div className="compact-post" key={post.id}><PlatformIcon platform={post.platforms[0]} /><div><p>{post.text}</p><small><CalendarClock size={13} /> {formatDate(post.scheduledAt)}</small></div></div>)}</div>}</Card></section>
