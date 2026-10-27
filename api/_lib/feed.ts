@@ -184,7 +184,8 @@ function normalizeItem(item: Record<string, unknown>, baseUrl: string): FeedItem
   const link = itemLink(item)
   const absoluteLink = link ? new URL(link, baseUrl).toString() : ''
   const title = plainText(item.title, 300) || (absoluteLink ? decodeURIComponent(new URL(absoluteLink).pathname.split('/').filter(Boolean).pop() || absoluteLink).replace(/[-_]+/g, ' ') : 'Untitled')
-  const id = text(item.guid || item.id || item['dc:identifier']) || absoluteLink || title
+  const fallbackId = absoluteLink ? (absoluteLink === baseUrl ? `${absoluteLink}#${title}` : absoluteLink) : title
+  const id = text(item.guid || item.id || item['dc:identifier']) || fallbackId
   const news = asArray(item['ht:news_item']).map((entry) => {
     const newsItem = entry as Record<string, unknown>
     return { title: plainText(newsItem['ht:news_item_title'], 300), url: text(newsItem['ht:news_item_url']), source: plainText(newsItem['ht:news_item_source'], 120) }
