@@ -1,4 +1,4 @@
-import { readFeed } from './_lib/feed'
+import { readFeed } from './_lib/feed.js'
 
 interface ApiRequest {
   method?: string
