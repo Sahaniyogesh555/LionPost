@@ -55,7 +55,7 @@ export default function NewPost() {
     if (when === 'later' && !schedule) return setError('Pick a date and time for your post.')
     if (when === 'publish') {
       if (!session?.access_token) return setError('Sign in again before publishing.')
-      if (chosenAccounts.some((account) => account.connectionType !== 'telegram')) return setError('Real publishing currently works with connected Telegram accounts only. Remove draft-only profiles from this selection.')
+      if (chosenAccounts.some((account) => account.connectionType !== 'telegram')) return setError('This composer publishes to connected Telegram accounts only. Use the dedicated Blogger page for articles, or remove other profiles from this selection.')
       if (mediaType === 'video' && media) return setError('Telegram video publishing is not connected yet. Choose an image or save a draft.')
       if (firstComment && comment.trim()) return setError('First comments are not supported by Telegram publishing yet. Turn that option off first.')
       setPublishing(true)
@@ -110,7 +110,7 @@ export default function NewPost() {
       </div>
       <div className="form-side-column">
         <Card className="form-card" title="Post to" subtitle="Tap the accounts that get this." action={<IconBadge color="blue"><Send size={18} /></IconBadge>}>
-          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
+          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' || account.connectionType === 'blogger' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
         </Card>
         <Card className="form-card" title="First comment" subtitle="Goes under the post, right after it is sent." action={<IconBadge color="pink"><MessageSquare size={18} /></IconBadge>}>
           <CheckBox checked={firstComment} onChange={setFirstComment} label="Add a first comment" />

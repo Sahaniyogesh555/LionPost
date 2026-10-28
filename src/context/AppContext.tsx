@@ -4,6 +4,7 @@ import type { AppNotification, Automation, Post, SocialAccount, ToastMessage, Us
 import { useAuth } from './AuthContext'
 import { cloud, loadWorkspace, saveWorkspace, type CloudWorkspace } from '../services/cloud'
 import { disconnectTelegramAccount } from '../services/telegram'
+import { disconnectBloggerAccount } from '../services/blogger'
 
 const defaultProfile: UserProfile = { name: '', email: '', about: '', website: '', phone: '', country: '' }
 const OWNER_KEY = 'alphapost-workspace-owner'
@@ -251,13 +252,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeAccount: async (id) => {
       const account = accounts.find((item) => item.id === id)
       if (!account) return false
-      if (account.connectionType === 'telegram') {
+      if (account.connectionType === 'telegram' || account.connectionType === 'blogger') {
         const saved = await runCloud(async (userId, accessToken) => {
-          await disconnectTelegramAccount(accessToken, id)
+          if (account.connectionType === 'telegram') await disconnectTelegramAccount(accessToken, id)
+          else await disconnectBloggerAccount(accessToken, id)
           await cloud.deleteAccount(userId, id)
         })
         if (!saved) {
-          notify('Telegram could not be disconnected. Your connection was kept; please try again.', 'error')
+          notify(`${account.platform} could not be disconnected. Your connection was kept; please try again.`, 'error')
           return false
         }
       } else {

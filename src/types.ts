@@ -7,6 +7,8 @@ export interface PublishResult {
   platform: Platform
   status: 'sent' | 'failed'
   messageId?: number
+  externalId?: string
+  url?: string
   publishedAt?: string
   error?: string
 }
@@ -29,7 +31,7 @@ export interface SocialAccount {
   name: string
   handle: string
   status: 'working' | 'paused'
-  connectionType?: 'local' | 'telegram'
+  connectionType?: 'local' | 'telegram' | 'blogger'
   externalId?: string
   botUsername?: string
 }
