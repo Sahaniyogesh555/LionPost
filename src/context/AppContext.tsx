@@ -1,15 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocalStorage, makeId } from '../hooks/useLocalStorage'
 import type { AppNotification, Automation, Post, SocialAccount, ToastMessage, UserProfile } from '../types'
+import { useAuth } from './AuthContext'
+import { cloud, loadWorkspace, saveWorkspace, type CloudWorkspace } from '../services/cloud'
+import { disconnectTelegramAccount } from '../services/telegram'
 
-const defaultProfile: UserProfile = {
-  name: '',
-  email: '',
-  about: '',
-  website: '',
-  phone: '',
-  country: '',
-}
+const defaultProfile: UserProfile = { name: '', email: '', about: '', website: '', phone: '', country: '' }
+const OWNER_KEY = 'alphapost-workspace-owner'
 
 // Remove only the fixed records shipped by the original demo. User-created
 // records have timestamped IDs and are left untouched.
@@ -25,6 +22,32 @@ function withoutLegacyDemoData<T extends { id: string }>(items: T[], ids: Set<st
   return filtered.length === items.length ? items : filtered
 }
 
+function mergeRecords<T extends { id: string }>(cloudItems: T[], localItems: T[]) {
+  const ids = new Set(cloudItems.map((item) => item.id))
+  return [...cloudItems, ...localItems.filter((item) => !ids.has(item.id))]
+}
+
+function mergeProfile(cloudProfile: UserProfile, localProfile: UserProfile, email: string, name: string): UserProfile {
+  return {
+    name: cloudProfile.name || localProfile.name || name,
+    email: email || cloudProfile.email || localProfile.email,
+    about: cloudProfile.about || localProfile.about,
+    website: cloudProfile.website || localProfile.website,
+    phone: cloudProfile.phone || localProfile.phone,
+    country: cloudProfile.country || localProfile.country,
+    photo: cloudProfile.photo || localProfile.photo,
+  }
+}
+
+function clearPrivateCache() {
+  Object.keys(localStorage).filter((key) => key.startsWith('alphapost-') && key !== 'alphapost-theme').forEach((key) => localStorage.removeItem(key))
+  sessionStorage.removeItem('alphapost-gemini-session')
+}
+
+export type CloudStatus = 'offline' | 'loading' | 'syncing' | 'saved' | 'error'
+type NewAccount = Omit<SocialAccount, 'id' | 'status'> & Partial<Pick<SocialAccount, 'id' | 'status'>>
+type CloudOperation = (userId: string, accessToken: string) => Promise<void>
+
 interface AppContextValue {
   posts: Post[]
   accounts: SocialAccount[]
@@ -33,11 +56,13 @@ interface AppContextValue {
   profile: UserProfile
   theme: 'light' | 'dark'
   toasts: ToastMessage[]
+  cloudStatus: CloudStatus
+  cloudError: string
   addPost: (post: Omit<Post, 'id' | 'createdAt'>) => Post
   updatePost: (id: string, update: Partial<Post>) => void
   deletePost: (id: string) => void
-  addAccount: (account: Omit<SocialAccount, 'id' | 'status'>) => void
-  removeAccount: (id: string) => void
+  addAccount: (account: NewAccount) => SocialAccount
+  removeAccount: (id: string) => Promise<boolean>
   addAutomation: (automation: Omit<Automation, 'id' | 'createdAt' | 'active'>) => void
   toggleAutomation: (id: string) => void
   updateAutomation: (id: string, update: Partial<Automation>) => void
@@ -54,6 +79,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { user, session, loading: authLoading } = useAuth()
   const [posts, setPosts] = useLocalStorage<Post[]>('alphapost-posts', [])
   const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>('alphapost-accounts', [])
   const [automations, setAutomations] = useLocalStorage<Automation[]>('alphapost-automations', [])
@@ -61,6 +87,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useLocalStorage<UserProfile>('alphapost-profile', defaultProfile)
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('alphapost-theme', 'light')
   const [toasts, setToasts] = useState<ToastMessage[]>([])
+  const [cloudStatus, setCloudStatus] = useState<CloudStatus>('offline')
+  const [cloudError, setCloudError] = useState('')
+  const hydratedUser = useRef<string | null>(null)
+  const previousUser = useRef<string | null>(null)
+  const cloudQueue = useRef<Promise<unknown>>(Promise.resolve())
+  const pendingWrites = useRef(0)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -81,6 +113,98 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [setPosts, setAccounts, setAutomations, setNotifications, setProfile])
 
+  useEffect(() => {
+    if (authLoading) return
+    let cancelled = false
+
+    if (!user) {
+      hydratedUser.current = null
+      if (previousUser.current) {
+        setPosts([])
+        setAccounts([])
+        setAutomations([])
+        setNotifications([])
+        setProfile(defaultProfile)
+        // Let the empty-state storage effects settle, then remove the keys too.
+        window.setTimeout(clearPrivateCache, 0)
+      } else {
+        clearPrivateCache()
+      }
+      previousUser.current = null
+      setCloudStatus('offline')
+      setCloudError('')
+      return
+    }
+
+    const userId = user.id
+    previousUser.current = userId
+    hydratedUser.current = null
+    setCloudStatus('loading')
+    setCloudError('')
+    const owner = localStorage.getItem(OWNER_KEY)
+    const localSnapshot: CloudWorkspace = { posts, accounts, automations, notifications, profile }
+
+    loadWorkspace(userId).then(async (remote) => {
+      if (cancelled) return
+      const mayMigrateLocal = !owner || owner === userId
+      const next: CloudWorkspace = mayMigrateLocal ? {
+        posts: mergeRecords(remote.posts, localSnapshot.posts),
+        accounts: mergeRecords(remote.accounts, localSnapshot.accounts),
+        automations: mergeRecords(remote.automations, localSnapshot.automations),
+        notifications: mergeRecords(remote.notifications, localSnapshot.notifications),
+        profile: mergeProfile(remote.profile, localSnapshot.profile, user.email || '', String(user.user_metadata?.name || '')),
+      } : {
+        ...remote,
+        profile: mergeProfile(remote.profile, defaultProfile, user.email || '', String(user.user_metadata?.name || '')),
+      }
+      setPosts(next.posts)
+      setAccounts(next.accounts)
+      setAutomations(next.automations)
+      setNotifications(next.notifications)
+      setProfile(next.profile)
+      await saveWorkspace(userId, next)
+      if (cancelled) return
+      localStorage.setItem(OWNER_KEY, userId)
+      hydratedUser.current = userId
+      setCloudStatus('saved')
+    }).catch((error) => {
+      if (cancelled) return
+      hydratedUser.current = null
+      setCloudStatus('error')
+      setCloudError(error instanceof Error ? error.message : 'Your cloud workspace could not be loaded.')
+    })
+
+    return () => { cancelled = true }
+    // The workspace is intentionally hydrated only when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading])
+
+  const runCloud = useCallback((operation: CloudOperation): Promise<boolean> => {
+    const userId = hydratedUser.current
+    const accessToken = session?.access_token
+    if (!userId || !accessToken) return Promise.resolve(false)
+    pendingWrites.current += 1
+    setCloudStatus('syncing')
+    setCloudError('')
+    const task = cloudQueue.current.catch(() => undefined).then(async () => {
+      try {
+        await operation(userId, accessToken)
+        return true
+      } catch (error) {
+        setCloudStatus('error')
+        setCloudError(error instanceof Error ? error.message : 'A cloud change could not be saved.')
+        return false
+      } finally {
+        pendingWrites.current = Math.max(0, pendingWrites.current - 1)
+        if (pendingWrites.current === 0) {
+          setCloudStatus((current) => current === 'error' ? current : 'saved')
+        }
+      }
+    })
+    cloudQueue.current = task
+    return task
+  }, [session?.access_token])
+
   const dismissToast = useCallback((id: string) => {
     setToasts((items) => items.filter((item) => item.id !== id))
   }, [])
@@ -99,23 +223,88 @@ export function AppProvider({ children }: { children: ReactNode }) {
     profile,
     theme,
     toasts,
+    cloudStatus,
+    cloudError,
     addPost: (post) => {
       const created = { ...post, id: makeId('post'), createdAt: new Date().toISOString() }
       setPosts((items) => [created, ...items])
+      void runCloud((userId) => cloud.upsertPost(userId, created))
       return created
     },
-    updatePost: (id, update) => setPosts((items) => items.map((post) => post.id === id ? { ...post, ...update } : post)),
-    deletePost: (id) => setPosts((items) => items.filter((post) => post.id !== id)),
-    addAccount: (account) => setAccounts((items) => [...items, { ...account, id: makeId('account'), status: 'working' }]),
-    removeAccount: (id) => setAccounts((items) => items.filter((account) => account.id !== id)),
-    addAutomation: (automation) => setAutomations((items) => [{ ...automation, id: makeId('auto'), createdAt: new Date().toISOString(), active: true }, ...items]),
-    toggleAutomation: (id) => setAutomations((items) => items.map((item) => item.id === id ? { ...item, active: !item.active } : item)),
-    updateAutomation: (id, update) => setAutomations((items) => items.map((item) => item.id === id ? { ...item, ...update } : item)),
-    deleteAutomation: (id) => setAutomations((items) => items.filter((item) => item.id !== id)),
-    updateProfile: (update) => setProfile((current) => ({ ...current, ...update })),
+    updatePost: (id, update) => {
+      const current = posts.find((post) => post.id === id)
+      if (!current) return
+      const updated = { ...current, ...update }
+      setPosts((items) => items.map((post) => post.id === id ? updated : post))
+      void runCloud((userId) => cloud.upsertPost(userId, updated))
+    },
+    deletePost: (id) => {
+      setPosts((items) => items.filter((post) => post.id !== id))
+      void runCloud((userId) => cloud.deletePost(userId, id))
+    },
+    addAccount: (account) => {
+      const created: SocialAccount = { ...account, id: account.id || makeId('account'), status: account.status || 'working' }
+      setAccounts((items) => [...items.filter((item) => item.id !== created.id), created])
+      void runCloud((userId) => cloud.upsertAccount(userId, created))
+      return created
+    },
+    removeAccount: async (id) => {
+      const account = accounts.find((item) => item.id === id)
+      if (!account) return false
+      if (account.connectionType === 'telegram') {
+        const saved = await runCloud(async (userId, accessToken) => {
+          await disconnectTelegramAccount(accessToken, id)
+          await cloud.deleteAccount(userId, id)
+        })
+        if (!saved) {
+          notify('Telegram could not be disconnected. Your connection was kept; please try again.', 'error')
+          return false
+        }
+      } else {
+        void runCloud((userId) => cloud.deleteAccount(userId, id))
+      }
+      setAccounts((items) => items.filter((item) => item.id !== id))
+      return true
+    },
+    addAutomation: (automation) => {
+      const created = { ...automation, id: makeId('auto'), createdAt: new Date().toISOString(), active: true }
+      setAutomations((items) => [created, ...items])
+      void runCloud((userId) => cloud.upsertAutomation(userId, created))
+    },
+    toggleAutomation: (id) => {
+      const current = automations.find((item) => item.id === id)
+      if (!current) return
+      const updated = { ...current, active: !current.active }
+      setAutomations((items) => items.map((item) => item.id === id ? updated : item))
+      void runCloud((userId) => cloud.upsertAutomation(userId, updated))
+    },
+    updateAutomation: (id, update) => {
+      const current = automations.find((item) => item.id === id)
+      if (!current) return
+      const updated = { ...current, ...update }
+      setAutomations((items) => items.map((item) => item.id === id ? updated : item))
+      void runCloud((userId) => cloud.upsertAutomation(userId, updated))
+    },
+    deleteAutomation: (id) => {
+      setAutomations((items) => items.filter((item) => item.id !== id))
+      void runCloud((userId) => cloud.deleteAutomation(userId, id))
+    },
+    updateProfile: (update) => {
+      const updated = { ...profile, ...update }
+      setProfile(updated)
+      void runCloud((userId) => cloud.upsertProfile(userId, updated))
+    },
     setTheme,
-    markNotificationsRead: () => setNotifications((items) => items.map((item) => ({ ...item, read: true }))),
-    markNotificationRead: (id) => setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item)),
+    markNotificationsRead: () => {
+      const updated = notifications.map((item) => ({ ...item, read: true }))
+      setNotifications(updated)
+      void runCloud((userId) => cloud.upsertNotifications(userId, updated))
+    },
+    markNotificationRead: (id) => {
+      const updated = notifications.map((item) => item.id === id ? { ...item, read: true } : item)
+      setNotifications(updated)
+      void runCloud((userId) => cloud.upsertNotifications(userId, updated))
+    },
     notify,
     dismissToast,
     resetApp: () => {
@@ -124,8 +313,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAutomations([])
       setNotifications([])
       setProfile(defaultProfile)
+      void runCloud((userId) => cloud.clearWorkspace(userId))
     },
-  }), [posts, accounts, automations, notifications, profile, theme, toasts, setPosts, setAccounts, setAutomations, setNotifications, setProfile, setTheme, notify, dismissToast])
+  }), [posts, accounts, automations, notifications, profile, theme, toasts, cloudStatus, cloudError, setPosts, setAccounts, setAutomations, setNotifications, setProfile, setTheme, runCloud, notify, dismissToast])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

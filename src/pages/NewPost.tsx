@@ -2,13 +2,16 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { CalendarClock, Check, FileImage, Link2, MessageSquare, Plus, Send, Sparkles, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import PlatformIcon from '../components/PlatformIcon'
 import { Button, Card, CheckBox, Field, IconBadge, PageHeader } from '../components/UI'
 import { readFileAsDataUrl } from '../utils'
 import { generateSocialDraft } from '../services/gemini'
+import { publishToTelegram } from '../services/telegram'
 
 export default function NewPost() {
   const { accounts, addPost, notify } = useApp()
+  const { session } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -19,7 +22,7 @@ export default function NewPost() {
   const [branding, setBranding] = useState(true)
   const [firstComment, setFirstComment] = useState(false)
   const [comment, setComment] = useState('')
-  const [when, setWhen] = useState<'draft' | 'later'>('draft')
+  const [when, setWhen] = useState<'publish' | 'draft' | 'later'>('draft')
   const [schedule, setSchedule] = useState(() => {
     const date = new Date(Date.now() + 86400000)
     date.setMinutes(0, 0, 0)
@@ -27,6 +30,7 @@ export default function NewPost() {
   })
   const [error, setError] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [publishing, setPublishing] = useState(false)
 
   const upload = async (file?: File) => {
     if (!file) return
@@ -41,15 +45,35 @@ export default function NewPost() {
     setMedia(await readFileAsDataUrl(file))
   }
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (publishing) return
     setError('')
     const chosenAccounts = accounts.filter((account) => selected.includes(account.id))
     if (!text.trim() && !media) return setError('Write something or add a photo first.')
     if (!chosenAccounts.length) return setError('Choose at least one account to post to.')
     if (when === 'later' && !schedule) return setError('Pick a date and time for your post.')
+    if (when === 'publish') {
+      if (!session?.access_token) return setError('Sign in again before publishing.')
+      if (chosenAccounts.some((account) => account.connectionType !== 'telegram')) return setError('Real publishing currently works with connected Telegram accounts only. Remove draft-only profiles from this selection.')
+      if (mediaType === 'video' && media) return setError('Telegram video publishing is not connected yet. Choose an image or save a draft.')
+      if (firstComment && comment.trim()) return setError('First comments are not supported by Telegram publishing yet. Turn that option off first.')
+      setPublishing(true)
+      try {
+        const results = await publishToTelegram(session.access_token, { accountIds: chosenAccounts.map((account) => account.id), text: text.trim(), image: media || undefined })
+        const failed = results.filter((result) => result.status === 'failed').length
+        addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: failed ? 'failed' : 'sent', image: media || undefined, publishResults: results })
+        notify(failed ? `${results.length - failed} published; ${failed} failed. Open Posts for the Telegram errors.` : `Published to ${results.length} Telegram ${results.length === 1 ? 'account' : 'accounts'}.`, failed ? 'error' : 'success')
+        navigate('/app/posts')
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : 'Telegram publishing failed.')
+      } finally {
+        setPublishing(false)
+      }
+      return
+    }
     addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: when === 'later' ? 'scheduled' : 'draft', scheduledAt: when === 'later' ? new Date(schedule).toISOString() : undefined, image: mediaType === 'image' ? media || undefined : undefined, firstComment: firstComment ? comment : undefined })
-    notify(when === 'later' ? 'Post saved to your local schedule. Automatic publishing is not connected.' : 'Draft saved in this browser.')
+    notify(when === 'later' ? 'Post saved to your cloud schedule. Background publishing is not connected yet.' : 'Draft saved to your cloud workspace.')
     navigate('/app/posts')
   }
 
@@ -86,7 +110,7 @@ export default function NewPost() {
       </div>
       <div className="form-side-column">
         <Card className="form-card" title="Post to" subtitle="Tap the accounts that get this." action={<IconBadge color="blue"><Send size={18} /></IconBadge>}>
-          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}</span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
+          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
         </Card>
         <Card className="form-card" title="First comment" subtitle="Goes under the post, right after it is sent." action={<IconBadge color="pink"><MessageSquare size={18} /></IconBadge>}>
           <CheckBox checked={firstComment} onChange={setFirstComment} label="Add a first comment" />
@@ -94,11 +118,11 @@ export default function NewPost() {
           {firstComment && <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write your first comment…" />}
         </Card>
         <Card className="form-card when-card" title="When" subtitle="Now, or pick a time." action={<IconBadge color="green"><CalendarClock size={18} /></IconBadge>}>
-          <div className="segmented-control"><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Save a draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Plan a time</button></div>
+          <div className="segmented-control"><button type="button" className={when === 'publish' ? 'active' : ''} onClick={() => setWhen('publish')}><Send size={15} /> Publish now</button><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Schedule</button></div>
           {when === 'later' && <Field label="Date and time"><input type="datetime-local" value={schedule} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setSchedule(event.target.value)} /></Field>}
-          <p className="helper-text">Drafts and schedules are stored in this browser. This preview does not publish to social networks automatically.</p>
+          <p className="helper-text">{when === 'publish' ? 'Sends immediately through your Telegram bot and saves each account’s result.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
           {error && <div className="form-error">{error}</div>}
-          <Button type="submit" size="lg" icon={when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
+          <Button type="submit" size="lg" disabled={publishing} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing to Telegram…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
         </Card>
       </div>
     </form>

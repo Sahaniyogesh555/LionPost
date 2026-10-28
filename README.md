@@ -1,15 +1,23 @@
 # AlphaPost
 
-A responsive React implementation of the AlphaPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, authentication screens, and a broad creator workspace with a warm cream background, rounded cards, colorful tool icons, and yellow primary actions.
+A responsive React implementation of the authentic AlphaPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and Telegram publishing.
 
 ## Run locally
 
 ```bash
 npm install
+cp .env.example .env.local
+# Fill in the Supabase values and generate a TOKEN_ENCRYPTION_KEY.
 npm run dev
 ```
 
-The Vite server listens on `0.0.0.0:5173`.
+The Vite server listens on `0.0.0.0:5173` and provides local middleware for the feed, Telegram, and account APIs. Generate a new 32-byte encryption key with:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
+```
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY` or `TOKEN_ENCRYPTION_KEY` through a `VITE_` variable. The publishable Supabase key is the only Supabase credential intended for the browser.
 
 ## Production build
 
@@ -18,45 +26,48 @@ npm run build
 npm run preview
 ```
 
-## Included screens
+## Functional workflows
 
-- Public landing page with tools, FAQ, and calls to action
-- Login and account creation with client-side validation
-- Home dashboard with live post/account counts, quick tools, upcoming posts, and recent activity
-- New Post composer with account selection, media upload, first comment, send-now, and scheduling
-- Post history with search, filters, duplication, send-now, deletion, and CSV export
-- Social account connection and removal workflows
-- AI and website auto-post setup, scheduling, editing, pausing, running, and deletion
-- Gemini key management with masked-key display and model status UI
-- Branding editor with live photo/design-card previews and saved preferences
-- Video Automation, Shorts Maker, Bee TikTok, and Video Translator workspaces with local video previews and creation history
-- Pin Maker with multiple products, six visual styles, palettes, live preview, publishing, and real 1000 × 1500 PNG export
-- Pinterest Affiliate automation management and setup guide
-- Blogger connections and article automations
-- Trending topics with regional and category filters
-- Profile, settings, notifications, dark mode, and plan selection
+- **Email authentication:** Supabase email signup, confirmation, login, password recovery/reset, verified password changes, and password-confirmed account deletion.
+- **Cloud workspace:** Posts, social accounts, automations, notifications, and profile data are isolated by owner RLS policies. Existing browser work is migrated on first login; private browser state is cleared on logout.
+- **Telegram:** Connect a BotFather bot to a channel or group. The server validates the bot/chat and posting permission, encrypts the token with AES-256-GCM, and publishes text or uploaded images through the Bot API. Per-account results and errors appear in Post history.
+- **Content discovery:** Live Google Trends, RSS/Atom feeds, sitemaps, website previews, seen-item tracking, and duplicate prevention.
+- **Gemini:** User-supplied API keys, model discovery/validation, and real text drafting. Raw keys remain session-only and go directly from the browser to Google.
+- **Creation tools:** Branding, Pin Maker with real PNG export, video previews/history, automations, Blogger setup, notifications, dark mode, and responsive mobile layouts.
 
-## Data and integrations
+Drafts and scheduled records are saved to the cloud, but **background scheduled publishing is not enabled yet**. Non-Telegram social profiles are explicitly marked as draft-only until their real OAuth/publishing integrations exist. Full server-side video rendering, Blogger OAuth, and other social OAuth are separate future work.
 
-The app is a fully interactive front-end implementation. It starts with no posts, connected accounts, automations, blogs, Gemini keys, or notifications. Data users create is stored in browser `localStorage`; legacy fixed demo records are removed automatically while user-created records are preserved. No credentials are transmitted to a server.
+## Data protection
 
-Real social-network OAuth/publishing, Gemini API generation, AliExpress/Blogger APIs, and server-side AI video rendering require production credentials and backend services. The UI is structured so those integrations can be connected next.
+- Six normalized Supabase tables use per-user ownership and cascading deletion.
+- Browser roles cannot read or write the `social_connections` credential table.
+- Telegram tokens are never written to browser storage or returned by an API.
+- Account deletion verifies the current password and removes the Auth user and all owned cloud records.
+- No website advertisements or fixed demo content are included.
+
+## Integration test
+
+```bash
+npm run test:integration
+```
+
+The test requires the server environment and outbound Supabase access. It creates two temporary confirmed users, checks real Auth/RLS/cloud behavior, uses a mocked Telegram Bot API for deterministic success/partial-failure/photo flows, verifies encryption and cascades, and deletes the temporary users in `finally`. It does not need or use a real Telegram bot.
 
 ## Stack
 
-- React 19 + TypeScript
-- React Router
-- Vite
-- Lucide icons
-- Nunito variable font (self-hosted through Fontsource)
-- Custom responsive CSS with light and dark themes
+- React 19 + TypeScript + React Router
+- Vite + Vercel Node functions
+- Supabase Auth, Postgres, and row-level security
+- Telegram Bot API + AES-256-GCM credential encryption
+- Gemini API, RSS/Atom, sitemaps, and Google Trends
+- Lucide icons, self-hosted Nunito, and custom responsive CSS
 
 ## Main routes
 
 - `/` — landing page
-- `/login` and `/signup` — authentication
-- `/app` — dashboard
-- `/app/new-post` — composer
-- `/app/posts` — post history
-- `/app/accounts` — social accounts
+- `/login`, `/signup`, `/reset-password` — authentication
+- `/app` — protected dashboard
+- `/app/new-post` — composer and Telegram publishing
+- `/app/posts` — post history and publish results
+- `/app/accounts` — Telegram connections and draft profiles
 - `/app/auto-post` — automation hub

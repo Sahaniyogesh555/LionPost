@@ -2,6 +2,15 @@ export type Platform = 'Facebook' | 'Instagram' | 'X' | 'Pinterest' | 'Telegram'
 
 export type PostStatus = 'sent' | 'scheduled' | 'failed' | 'draft'
 
+export interface PublishResult {
+  accountId: string
+  platform: Platform
+  status: 'sent' | 'failed'
+  messageId?: number
+  publishedAt?: string
+  error?: string
+}
+
 export interface Post {
   id: string
   text: string
@@ -11,6 +20,7 @@ export interface Post {
   scheduledAt?: string
   image?: string
   firstComment?: string
+  publishResults?: PublishResult[]
 }
 
 export interface SocialAccount {
@@ -19,6 +29,9 @@ export interface SocialAccount {
   name: string
   handle: string
   status: 'working' | 'paused'
+  connectionType?: 'local' | 'telegram'
+  externalId?: string
+  botUsername?: string
 }
 
 export interface Automation {
