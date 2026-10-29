@@ -1,5 +1,5 @@
-import { respond, type ApiRequest, type ApiResponse } from '../_lib/server.js'
-import { beginX, completeX, disconnectX, publishX } from '../_lib/x.js'
+import { respond, type ApiRequest, type ApiResponse } from './_lib/server.js'
+import { beginX, completeX, disconnectX, publishX } from './_lib/x.js'
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   const action = Array.isArray(request.query.action) ? request.query.action[0] : request.query.action
