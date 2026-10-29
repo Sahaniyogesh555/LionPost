@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /reset-password
+
+Sitemap: https://lionpost.vercel.app/sitemap.xml
