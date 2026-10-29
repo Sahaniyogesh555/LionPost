@@ -29,7 +29,7 @@ export default function Blogger() {
   const { accounts, automations, addAutomation, addAccount, removeAccount, posts, addPost, notify } = useApp()
   const { session } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [legacyBlogs, setLegacyBlogs] = useLocalStorage<LegacyBlog[]>('alphapost-blogs', [])
+  const [legacyBlogs, setLegacyBlogs] = useLocalStorage<LegacyBlog[]>('lionpost-blogs', [])
   const [modal, setModal] = useState<'compose' | 'automation' | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState('')

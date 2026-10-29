@@ -20,7 +20,7 @@ const defaults: BrandingSettings = { everyAuto: true, ownPhotos: true, showName:
 const colors = [{ name: 'yellow', value: '#ffd62e', text: '#171710' }, { name: 'white', value: '#ffffff', text: '#171710' }, { name: 'black', value: '#171717', text: '#ffffff' }, { name: 'red', value: '#f43f5e', text: '#ffffff' }, { name: 'blue', value: '#2387ee', text: '#ffffff' }, { name: 'green', value: '#10b981', text: '#ffffff' }, { name: 'pink', value: '#ec4899', text: '#ffffff' }, { name: 'orange', value: '#f97316', text: '#ffffff' }]
 
 export default function Branding() {
-  const [saved, setSaved] = useLocalStorage<BrandingSettings>('alphapost-branding', defaults)
+  const [saved, setSaved] = useLocalStorage<BrandingSettings>('lionpost-branding', defaults)
   const [settings, setSettings] = useState(saved)
   const [account, setAccount] = useState('')
   const { accounts, notify } = useApp()

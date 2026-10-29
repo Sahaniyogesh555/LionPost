@@ -1,6 +1,6 @@
-# AlphaPost
+# LionPost
 
-A responsive React implementation of the authentic AlphaPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and Telegram publishing.
+A responsive React implementation of the authentic LionPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and Telegram publishing.
 
 ## Run locally
 

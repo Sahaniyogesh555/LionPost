@@ -56,7 +56,7 @@ export async function respond(request: ApiRequest, response: ApiResponse, operat
     return response.status(200).json(result)
   } catch (error) {
     if (error instanceof ApiError) return response.status(error.status).json({ error: error.message })
-    console.error('AlphaPost API request failed', error instanceof Error ? error.message : 'Unknown error')
+    console.error('LionPost API request failed', error instanceof Error ? error.message : 'Unknown error')
     return response.status(500).json({ error: 'The server could not complete the request. Please try again.' })
   }
 }

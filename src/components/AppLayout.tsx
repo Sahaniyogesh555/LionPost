@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronRight, Cloud, CloudOff, LogOut, Menu, Moon, RefreshCw, Settings, Sun } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Sidebar from './Sidebar'
-import { AlphaMark, UserAvatar } from './Logo'
+import { BrandMark, UserAvatar } from './Logo'
 import { Toasts } from './UI'
 import { useApp } from '../context/AppContext'
 
@@ -46,7 +46,7 @@ export default function AppLayout() {
           </div>
           <div className="topbar-actions">
             <span className={`cloud-status cloud-${cloudStatus}`} title={cloudError || cloudLabel}>{cloudStatus === 'loading' || cloudStatus === 'syncing' ? <RefreshCw className="spin" size={15} /> : cloudStatus === 'error' || cloudStatus === 'offline' ? <CloudOff size={15} /> : <Cloud size={15} />}<small>{cloudLabel}</small></span>
-            <Link className="plan-pill" to="/app/plans"><AlphaMark size={31} /><span>Go ad free<small>See plans</small></span><ChevronRight size={14} /></Link>
+            <Link className="plan-pill" to="/app/plans"><BrandMark size={31} /><span>Go ad free<small>See plans</small></span><ChevronRight size={14} /></Link>
             <Link className="icon-button notification-button" to="/app/notifications" aria-label={`${unread} unread notifications`}><Bell size={18} />{unread > 0 && <span>{unread}</span>}</Link>
             <button className="icon-button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} aria-label="Toggle color theme">{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</button>
             <Link className="icon-button" to="/app/settings" aria-label="Settings"><Settings size={18} /></Link>

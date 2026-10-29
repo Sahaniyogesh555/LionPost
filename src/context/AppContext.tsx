@@ -7,7 +7,8 @@ import { disconnectTelegramAccount } from '../services/telegram'
 import { disconnectBloggerAccount } from '../services/blogger'
 
 const defaultProfile: UserProfile = { name: '', email: '', about: '', website: '', phone: '', country: '' }
-const OWNER_KEY = 'alphapost-workspace-owner'
+const OWNER_KEY = 'lionpost-workspace-owner'
+const LEGACY_OWNER_KEY = 'alphapost-workspace-owner'
 
 // Remove only the fixed records shipped by the original demo. User-created
 // records have timestamped IDs and are left untouched.
@@ -41,7 +42,12 @@ function mergeProfile(cloudProfile: UserProfile, localProfile: UserProfile, emai
 }
 
 function clearPrivateCache() {
-  Object.keys(localStorage).filter((key) => key.startsWith('alphapost-') && key !== 'alphapost-theme').forEach((key) => localStorage.removeItem(key))
+  Object.keys(localStorage).filter((key) => (
+    (key.startsWith('lionpost-') || key.startsWith('alphapost-'))
+    && key !== 'lionpost-theme'
+    && key !== 'alphapost-theme'
+  )).forEach((key) => localStorage.removeItem(key))
+  sessionStorage.removeItem('lionpost-gemini-session')
   sessionStorage.removeItem('alphapost-gemini-session')
 }
 
@@ -81,12 +87,12 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { user, session, loading: authLoading } = useAuth()
-  const [posts, setPosts] = useLocalStorage<Post[]>('alphapost-posts', [])
-  const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>('alphapost-accounts', [])
-  const [automations, setAutomations] = useLocalStorage<Automation[]>('alphapost-automations', [])
-  const [notifications, setNotifications] = useLocalStorage<AppNotification[]>('alphapost-notifications', [])
-  const [profile, setProfile] = useLocalStorage<UserProfile>('alphapost-profile', defaultProfile)
-  const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('alphapost-theme', 'light')
+  const [posts, setPosts] = useLocalStorage<Post[]>('lionpost-posts', [])
+  const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>('lionpost-accounts', [])
+  const [automations, setAutomations] = useLocalStorage<Automation[]>('lionpost-automations', [])
+  const [notifications, setNotifications] = useLocalStorage<AppNotification[]>('lionpost-notifications', [])
+  const [profile, setProfile] = useLocalStorage<UserProfile>('lionpost-profile', defaultProfile)
+  const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('lionpost-theme', 'light')
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const [cloudStatus, setCloudStatus] = useState<CloudStatus>('offline')
   const [cloudError, setCloudError] = useState('')
@@ -142,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     hydratedUser.current = null
     setCloudStatus('loading')
     setCloudError('')
-    const owner = localStorage.getItem(OWNER_KEY)
+    const owner = localStorage.getItem(OWNER_KEY) ?? localStorage.getItem(LEGACY_OWNER_KEY)
     const localSnapshot: CloudWorkspace = { posts, accounts, automations, notifications, profile }
 
     loadWorkspace(userId).then(async (remote) => {
@@ -166,6 +172,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await saveWorkspace(userId, next)
       if (cancelled) return
       localStorage.setItem(OWNER_KEY, userId)
+      localStorage.removeItem(LEGACY_OWNER_KEY)
       hydratedUser.current = userId
       setCloudStatus('saved')
     }).catch((error) => {

@@ -50,7 +50,7 @@ function readState(state: string) {
   const expectedBytes = Buffer.from(expected)
   if (actualBytes.length !== expectedBytes.length || !timingSafeEqual(actualBytes, expectedBytes)) throw new ApiError(400, 'The Google sign-in state could not be verified.')
   const value = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { userId?: string; expiresAt?: number }
-  if (!value.userId || !value.expiresAt || value.expiresAt < Date.now()) throw new ApiError(400, 'The Google sign-in expired. Start again from AlphaPost.')
+  if (!value.userId || !value.expiresAt || value.expiresAt < Date.now()) throw new ApiError(400, 'The Google sign-in expired. Start again from LionPost.')
   return value.userId
 }
 
@@ -132,7 +132,7 @@ export async function completeBlogger(request: ApiRequest) {
       const { data: previous } = await client.from('social_connections').select('encrypted_token').eq('user_id', userId).in('account_id', existingAccounts.map((item) => item.id)).limit(1).maybeSingle()
       if (previous?.encrypted_token) refreshToken = decryptToken(previous.encrypted_token)
     }
-    if (!refreshToken) throw new ApiError(400, 'Google did not provide offline access. Remove AlphaPost from your Google permissions and connect again.')
+    if (!refreshToken) throw new ApiError(400, 'Google did not provide offline access. Remove LionPost from your Google permissions and connect again.')
 
     let email = ''
     try {

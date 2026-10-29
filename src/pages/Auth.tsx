@@ -57,7 +57,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
         if (signInError) throw signInError
         updateProfile({ email: email.trim() })
       }
-      notify(isSignup ? 'Your AlphaPost account is ready.' : 'Welcome back!')
+      notify(isSignup ? 'Your LionPost account is ready.' : 'Welcome back!')
       navigate('/app')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Authentication failed. Please try again.')

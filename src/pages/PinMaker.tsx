@@ -50,12 +50,12 @@ export default function PinMaker() {
     ctx.fillStyle = color.pale; ctx.beginPath(); ctx.roundRect(80, top, 840, height, 24); ctx.fill()
     if (image.width) { const scale = Math.max(800 / image.width, (height - 40) / image.height); const width = image.width * scale; const h = image.height * scale; ctx.save(); ctx.beginPath(); ctx.roundRect(100, top + 20, 800, height - 40, 18); ctx.clip(); ctx.drawImage(image, 500 - width / 2, top + 20 + (height - 40 - h) / 2, width, h); ctx.restore() }
     ctx.fillStyle = color.text; ctx.font = '700 35px Nunito, sans-serif'; ctx.fillText(product.subtitle.slice(0, 60), 500, 1435)
-    const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = `${product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'alphapost-pin'}.png`; link.click()
+    const link = document.createElement('a'); link.href = canvas.toDataURL('image/png'); link.download = `${product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'lionpost-pin'}.png`; link.click()
     notify('Your 1000 × 1500 pin was downloaded.')
   }
 
   return <div className="pin-maker-page">
-    <PageHeader title="Pin Maker" subtitle="Paste a product picture, add your link, and AlphaPost makes a tall Pinterest pin. Pinterest shows 1000 by 1500 pins best." />
+    <PageHeader title="Pin Maker" subtitle="Paste a product picture, add your link, and LionPost makes a tall Pinterest pin. Pinterest shows 1000 by 1500 pins best." />
     <Card className="pin-designer-card">
       <span className="eyebrow">Your pin</span>
       <div className={`pin-canvas pin-style-${style.toLowerCase()}`} style={{ background: color.value, color: color.text, fontFamily: font }}><h2>{product.title || 'Your product title'}</h2><div className="pin-image-area" style={{ background: color.pale }}>{product.image ? <img src={product.image} alt={product.title} /> : <ImageIcon size={64} />}</div><p>{product.subtitle}</p>{footer && <small>{footer}</small>}</div>

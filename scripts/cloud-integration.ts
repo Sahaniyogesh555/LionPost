@@ -18,7 +18,7 @@ const userIds: string[] = []
 const originalFetch = globalThis.fetch
 
 async function makeUser(label: string) {
-  const email = `alphapost-${label}-${Date.now()}-${crypto.randomUUID()}@example.com`
+  const email = `lionpost-${label}-${Date.now()}-${crypto.randomUUID()}@example.com`
   const password = `Integration-${crypto.randomUUID()}-Pass!`
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { name: label } })
   if (error) throw error
@@ -76,7 +76,7 @@ try {
     const method = requestUrl.split('/').pop() || ''
     telegramCalls.push(method)
     const payload = body && typeof body === 'string' ? JSON.parse(body) : body instanceof FormData ? Object.fromEntries(body.entries()) : {}
-    if (method === 'getMe') return json({ ok: true, result: { id: 999001, first_name: 'Integration Bot', username: 'alphapost_integration_bot' } })
+    if (method === 'getMe') return json({ ok: true, result: { id: 999001, first_name: 'Integration Bot', username: 'lionpost_integration_bot' } })
     if (method === 'getChat') {
       const second = payload.chat_id === '@second'
       return json({ ok: true, result: { id: second ? -1001002 : -1001001, title: second ? 'Integration Two' : 'Integration One', username: second ? 'second' : 'first', type: 'channel' } })
@@ -154,7 +154,7 @@ try {
   const { data: remainingPosts } = await admin.from('posts').select('id').eq('user_id', a.id)
   assert.equal(remainingPosts?.length, 0)
   console.log('✓ Disconnect cascade, current-password verification, and full account deletion cascade')
-  console.log('AlphaPost cloud integration checks passed.')
+  console.log('LionPost cloud integration checks passed.')
 } finally {
   globalThis.fetch = originalFetch
   for (const id of userIds) await admin.auth.admin.deleteUser(id).catch(() => undefined)

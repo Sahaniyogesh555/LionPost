@@ -16,7 +16,7 @@ interface GeminiKey {
 const legacyDemoKeyIds = new Set(['key-1', 'key-2', 'key-3'])
 
 export default function Gemini() {
-  const [keys, setKeys] = useLocalStorage<GeminiKey[]>('alphapost-gemini-keys', [])
+  const [keys, setKeys] = useLocalStorage<GeminiKey[]>('lionpost-gemini-keys', [])
   const [input, setInput] = useState('')
   const [checking, setChecking] = useState('')
   const [adding, setAdding] = useState(false)
@@ -87,7 +87,7 @@ export default function Gemini() {
       </Card>
       <div className="gemini-info-column">
         <Card title="How your keys are used"><ul className="info-list"><li><ZapIcon />The writer discovers the text models available to your key.</li><li><CheckCircle2 />If a model is unavailable or reaches a limit, the next model or key is tried.</li><li><RefreshCw />Check models again whenever your Google access changes.</li></ul></Card>
-        <Card title="Session-only key storage"><ul className="info-list"><li><LockKeyhole />Raw keys are kept only in this tab’s session storage, not in persistent local storage.</li><li><ShieldCheck />Keys go directly from your browser to Google. They are not sent to an AlphaPost server.</li><li><KeyRound />Only the masked key and model list remain on this browser after the tab closes.</li><li><Trash2 />Remove a key to clear its session value and saved metadata.</li></ul></Card>
+        <Card title="Session-only key storage"><ul className="info-list"><li><LockKeyhole />Raw keys are kept only in this tab’s session storage, not in persistent local storage.</li><li><ShieldCheck />Keys go directly from your browser to Google. They are not sent to a LionPost server.</li><li><KeyRound />Only the masked key and model list remain on this browser after the tab closes.</li><li><Trash2 />Remove a key to clear its session value and saved metadata.</li></ul></Card>
       </div>
     </div>
 

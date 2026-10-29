@@ -46,7 +46,7 @@ function nodeResponse(response: ServerResponse): ApiResponse {
 
 function localApi(): Plugin {
   return {
-    name: 'alphapost-local-api',
+    name: 'lionpost-local-api',
     configureServer(server) {
       server.middlewares.use('/api/feed', async (request, response) => {
         response.setHeader('Content-Type', 'application/json; charset=utf-8')

@@ -1,4 +1,5 @@
-const SESSION_KEY = 'alphapost-gemini-session'
+const SESSION_KEY = 'lionpost-gemini-session'
+const LEGACY_SESSION_KEY = 'alphapost-gemini-session'
 const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta'
 const memoryKeys: Record<string, string> = {}
 
@@ -13,7 +14,8 @@ interface GoogleError {
 
 function readSession(): Record<string, string> {
   try {
-    return { ...memoryKeys, ...JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}') as Record<string, string> }
+    const saved = sessionStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(LEGACY_SESSION_KEY)
+    return { ...memoryKeys, ...JSON.parse(saved || '{}') as Record<string, string> }
   } catch {
     return { ...memoryKeys }
   }
@@ -23,6 +25,7 @@ function writeSession(keys: Record<string, string>) {
   Object.assign(memoryKeys, keys)
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(keys))
+    sessionStorage.removeItem(LEGACY_SESSION_KEY)
   } catch {
     // The in-memory copy still works when browser storage is unavailable.
   }

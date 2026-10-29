@@ -18,7 +18,7 @@ export default function Posts() {
   const exportPosts = () => {
     const rows = [['Text', 'Platforms', 'Status', 'Created', 'Scheduled', 'Publishing'], ...filtered.map((post) => [post.text, post.platforms.join(', '), post.status, post.createdAt, post.scheduledAt || '', (post.publishResults || []).map((result) => `${result.accountId}: ${result.status}${result.error ? ` (${result.error})` : ''}`).join('; ')])]
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
-    downloadText('alphapost-posts.csv', csv, 'text/csv')
+    downloadText('lionpost-posts.csv', csv, 'text/csv')
     notify('Your posts were exported.')
   }
   const statusLabel = (post: Post) => post.publishResults?.some((result) => result.status === 'sent') && post.publishResults.some((result) => result.status === 'failed') ? 'partial' : post.status
