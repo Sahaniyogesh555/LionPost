@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/instagram/:action", "destination": "/api/instagram?action=:action" },
     { "source": "/api/x/:action", "destination": "/api/x?action=:action" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

@@ -9,6 +9,7 @@ import { Button, Card, Field, Modal, PageHeader } from '../components/UI'
 import type { Platform } from '../types'
 import { connectTelegramAccount } from '../services/telegram'
 import { beginXConnection } from '../services/x'
+import { beginInstagramConnection } from '../services/instagram'
 
 export default function Accounts() {
   const { accounts, addAccount, removeAccount, notify } = useApp()
@@ -24,26 +25,29 @@ export default function Accounts() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const connectX = async () => {
+  const connectOAuth = async (selected: 'X' | 'Instagram') => {
     if (connecting) return
     setPageError('')
-    if (!session?.access_token) return setPageError('Sign in again before connecting X.')
+    if (!session?.access_token) return setPageError(`Sign in again before connecting ${selected}.`)
     setConnecting(true)
     try {
-      const result = await beginXConnection(session.access_token)
+      const result = selected === 'X' ? await beginXConnection(session.access_token) : await beginInstagramConnection(session.access_token)
       window.location.assign(result.url)
     } catch (caught) {
-      setPageError(caught instanceof Error ? caught.message : 'X could not be connected.')
+      setPageError(caught instanceof Error ? caught.message : `${selected} could not be connected.`)
       setConnecting(false)
     }
   }
 
   useEffect(() => {
-    const connected = searchParams.get('x_connected')
-    const oauthError = searchParams.get('x_error')
-    if (connected) notify('X account connected. You can publish text posts to it now.')
-    if (oauthError) setPageError(oauthError)
-    if (connected || oauthError) setSearchParams({}, { replace: true })
+    const xConnected = searchParams.get('x_connected')
+    const xError = searchParams.get('x_error')
+    const instagramConnected = searchParams.get('instagram_connected')
+    const instagramError = searchParams.get('instagram_error')
+    if (xConnected) notify('X account connected. You can publish text posts to it now.')
+    if (instagramConnected) notify(`${instagramConnected === '1' ? 'Instagram account' : `${instagramConnected} Instagram accounts`} connected. You can publish photos and Reels now.`)
+    if (xError || instagramError) setPageError(xError || instagramError || '')
+    if (xConnected || xError || instagramConnected || instagramError) setSearchParams({}, { replace: true })
   }, [searchParams, setSearchParams, notify])
 
   const openConnect = (selected: Platform) => {
@@ -51,8 +55,8 @@ export default function Accounts() {
       navigate('/app/blogger')
       return
     }
-    if (selected === 'X') {
-      void connectX()
+    if (selected === 'X' || selected === 'Instagram') {
+      void connectOAuth(selected)
       return
     }
     setPlatform(selected)
@@ -91,11 +95,11 @@ export default function Accounts() {
   }
 
   return <div>
-    <PageHeader title="Accounts" subtitle="Connect Telegram, Blogger, or X for real publishing, or save local profiles for your drafts." action={<Button icon={<Plus size={16} />} onClick={() => openConnect('Telegram')}>Connect Telegram</Button>} />
+    <PageHeader title="Accounts" subtitle="Connect Instagram, Telegram, Blogger, or X for real publishing, or save local profiles for your drafts." action={<Button icon={<Plus size={16} />} onClick={() => openConnect('Telegram')}>Connect Telegram</Button>} />
     <AccountCards accounts={accounts} onAdd={openConnect} />
     {pageError && <div className="form-error">{pageError}</div>}
     <Card className="all-accounts-card" title="All your accounts" action={<span className="count-pill">{accounts.length}</span>}>
-      {accounts.length ? <div className="connected-account-list">{accounts.map((account) => <div className="connected-account" key={account.id}><PlatformIcon platform={account.platform} size="sm" /><div><strong>{account.handle}</strong><small>{account.name} · {account.platform}{account.botUsername ? ` · @${account.botUsername}` : ''}</small></div><span className={`working-badge ${!account.connectionType || account.connectionType === 'local' ? 'local-profile-badge' : ''}`}>{account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' ? <><CheckCircle2 size={13} /> Connected</> : <><Link2 size={13} /> Draft profile</>}</span><button className="icon-button subtle-danger" onClick={async () => { const removed = await removeAccount(account.id); if (removed) notify(!account.connectionType || account.connectionType === 'local' ? 'Local profile removed.' : `${account.platform} disconnected and its encrypted token was deleted.`, 'info') }} aria-label={`Remove ${account.handle}`}><Trash2 size={15} /></button></div>)}</div> : <div className="inline-empty">No accounts or draft profiles yet.</div>}
+      {accounts.length ? <div className="connected-account-list">{accounts.map((account) => <div className="connected-account" key={account.id}><PlatformIcon platform={account.platform} size="sm" /><div><strong>{account.handle}</strong><small>{account.name} · {account.platform}{account.botUsername ? ` · @${account.botUsername}` : ''}</small></div><span className={`working-badge ${!account.connectionType || account.connectionType === 'local' ? 'local-profile-badge' : ''}`}>{account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' || account.connectionType === 'instagram' ? <><CheckCircle2 size={13} /> Connected</> : <><Link2 size={13} /> Draft profile</>}</span><button className="icon-button subtle-danger" onClick={async () => { const removed = await removeAccount(account.id); if (removed) notify(!account.connectionType || account.connectionType === 'local' ? 'Local profile removed.' : `${account.platform} disconnected and its encrypted token was deleted.`, 'info') }} aria-label={`Remove ${account.handle}`}><Trash2 size={15} /></button></div>)}</div> : <div className="inline-empty">No accounts or draft profiles yet.</div>}
     </Card>
     <Modal open={!!platform} onClose={() => { if (!connecting) setPlatform(null) }} title={platform === 'Telegram' ? 'Connect Telegram' : `Add ${platform || ''} profile`}>
       <form onSubmit={submit} className="modal-form">

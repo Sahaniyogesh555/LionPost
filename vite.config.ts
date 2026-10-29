@@ -113,6 +113,35 @@ function localApi(): Plugin {
         await respond(apiRequest, nodeResponse(response), () => blogger[methods[action]](apiRequest))
       })
 
+      server.middlewares.use('/api/instagram', async (request, response) => {
+        const url = new URL(request.url || '/', 'http://localhost')
+        const action = url.pathname.replace(/^\/+|\/+$/g, '')
+        const instagram = await server.ssrLoadModule('/api/_lib/instagram.ts')
+        const apiRequest: ApiRequest = { method: request.method, query: Object.fromEntries(url.searchParams), headers: request.headers }
+        if (action === 'callback') {
+          if (request.method !== 'GET') {
+            response.statusCode = 405
+            response.end(JSON.stringify({ error: 'Method not allowed.' }))
+            return
+          }
+          const location = await instagram.completeInstagram(apiRequest)
+          response.setHeader('Cache-Control', 'no-store')
+          response.setHeader('Location', location)
+          response.statusCode = 302
+          response.end(JSON.stringify({}))
+          return
+        }
+        const methods: Record<string, string> = { connect: 'beginInstagram', disconnect: 'disconnectInstagram', publish: 'publishInstagram' }
+        if (request.method !== 'POST' || !methods[action]) {
+          response.statusCode = 405
+          response.end(JSON.stringify({ error: 'Method not allowed.' }))
+          return
+        }
+        const { respond } = await server.ssrLoadModule('/api/_lib/server.ts')
+        apiRequest.body = await readJson(request)
+        await respond(apiRequest, nodeResponse(response), () => instagram[methods[action]](apiRequest))
+      })
+
       server.middlewares.use('/api/x', async (request, response) => {
         const url = new URL(request.url || '/', 'http://localhost')
         const action = url.pathname.replace(/^\/+|\/+$/g, '')

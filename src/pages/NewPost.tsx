@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { CalendarClock, Check, FileImage, Link2, MessageSquare, Plus, Send, Sparkles, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -9,6 +9,8 @@ import { readFileAsDataUrl } from '../utils'
 import { generateSocialDraft } from '../services/gemini'
 import { publishToTelegram } from '../services/telegram'
 import { publishToX } from '../services/x'
+import { publishToInstagram } from '../services/instagram'
+import { uploadInstagramMedia } from '../services/media'
 import type { PublishResult } from '../types'
 
 export default function NewPost() {
@@ -19,6 +21,7 @@ export default function NewPost() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState((location.state as { text?: string } | null)?.text || '')
   const [media, setMedia] = useState('')
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
   const [selected, setSelected] = useState<string[]>(accounts.slice(0, 1).map((account) => account.id))
   const [branding, setBranding] = useState(true)
@@ -34,17 +37,29 @@ export default function NewPost() {
   const [generating, setGenerating] = useState(false)
   const [publishing, setPublishing] = useState(false)
 
+  useEffect(() => () => {
+    if (media.startsWith('blob:')) URL.revokeObjectURL(media)
+  }, [media])
+
   const upload = async (file?: File) => {
     if (!file) return
     if (file.type.startsWith('video/')) {
       if (file.size > 100 * 1024 * 1024) return notify('Please choose a video smaller than 100 MB.', 'error')
       setMediaType('video')
+      setMediaFile(file)
       setMedia(URL.createObjectURL(file))
       return
     }
     if (file.size > 3 * 1024 * 1024) return notify('For local saving, please choose an image smaller than 3 MB.', 'error')
     setMediaType('image')
+    setMediaFile(file)
     setMedia(await readFileAsDataUrl(file))
+  }
+
+  const clearMedia = () => {
+    setMedia('')
+    setMediaFile(null)
+    if (inputRef.current) inputRef.current.value = ''
   }
 
   const submit = async (event: FormEvent) => {
@@ -59,14 +74,28 @@ export default function NewPost() {
       if (!session?.access_token) return setError('Sign in again before publishing.')
       const telegramAccounts = chosenAccounts.filter((account) => account.connectionType === 'telegram')
       const xAccounts = chosenAccounts.filter((account) => account.connectionType === 'x')
-      if (telegramAccounts.length + xAccounts.length !== chosenAccounts.length) return setError('This composer publishes to connected Telegram and X accounts. Use the dedicated Blogger page for articles, or remove other profiles from this selection.')
+      const instagramAccounts = chosenAccounts.filter((account) => account.connectionType === 'instagram')
+      if (telegramAccounts.length + xAccounts.length + instagramAccounts.length !== chosenAccounts.length) return setError('This composer publishes to connected Instagram, Telegram, and X accounts. Use the dedicated Blogger page for articles, or remove other profiles from this selection.')
+      if (instagramAccounts.length && xAccounts.length) return setError('Publish to Instagram and X separately: Instagram requires media, while X publishing is currently text-only.')
+      if (instagramAccounts.length && (!media || !mediaFile)) return setError('Instagram publishing requires a photo or video. Add media or remove the Instagram account from this selection.')
       if (xAccounts.length && media) return setError('X publishing currently supports text posts only. Remove the media or remove the X account from this selection.')
       if (xAccounts.length && Array.from(text.trim()).length > 280) return setError('X posts can contain at most 280 characters. Shorten this post or remove the X account from this selection.')
-      if (mediaType === 'video' && media) return setError('Telegram video publishing is not connected yet. Choose an image or save a draft.')
-      if (firstComment && comment.trim()) return setError('First comments are not supported by Telegram or X publishing yet. Turn that option off first.')
+      if (telegramAccounts.length && mediaType === 'video' && media) return setError('Telegram video publishing is not connected yet. Choose an image, remove Telegram, or save a draft.')
+      if (firstComment && comment.trim()) return setError('First comments are not supported by Instagram, Telegram, or X publishing yet. Turn that option off first.')
       setPublishing(true)
       const results: PublishResult[] = []
       try {
+        let instagramMediaPath = ''
+        if (instagramAccounts.length && mediaFile) {
+          try {
+            instagramMediaPath = (await uploadInstagramMedia(mediaFile, session.user.id, mediaType)).path
+          } catch (caught) {
+            const message = caught instanceof Error ? caught.message : 'The Instagram media could not be uploaded.'
+            setError(message)
+            notify(message, 'error')
+            return
+          }
+        }
         if (telegramAccounts.length) {
           try {
             results.push(...await publishToTelegram(session.access_token, { accountIds: telegramAccounts.map((account) => account.id), text: text.trim(), image: media || undefined }))
@@ -81,6 +110,14 @@ export default function NewPost() {
           } catch (caught) {
             const message = caught instanceof Error ? caught.message : 'X publishing failed.'
             results.push(...xAccounts.map((account) => ({ accountId: account.id, platform: 'X' as const, status: 'failed' as const, error: message })))
+          }
+        }
+        if (instagramAccounts.length) {
+          try {
+            results.push(...await publishToInstagram(session.access_token, { accountIds: instagramAccounts.map((account) => account.id), text: text.trim(), mediaPath: instagramMediaPath, mediaType }))
+          } catch (caught) {
+            const message = caught instanceof Error ? caught.message : 'Instagram publishing failed.'
+            results.push(...instagramAccounts.map((account) => ({ accountId: account.id, platform: 'Instagram' as const, status: 'failed' as const, error: message })))
           }
         }
         const failed = results.filter((result) => result.status === 'failed').length
@@ -122,7 +159,7 @@ export default function NewPost() {
           <div className="field-heading-row"><Field label="Post text" /><button type="button" className="ai-write-button" onClick={generateText} disabled={generating}>{generating ? <span className="spinner" /> : <Sparkles size={14} />} {generating ? 'Writing with Gemini…' : 'Write with Gemini'}</button></div>
           <textarea className="post-textarea" value={text} onChange={(event) => setText(event.target.value)} placeholder="What do you want to say?" maxLength={2200} />
           <div className="character-row"><span>Each platform cuts long text at a word by itself.</span><span>{text.length} / 2200</span></div>
-          {media ? <div className="upload-preview">{mediaType === 'video' ? <video src={media} controls /> : <img src={media} alt="Upload preview" />}<button type="button" onClick={() => setMedia('')}><X size={16} /></button></div> : <button type="button" className="upload-dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files[0]) }}><IconBadge size="lg"><Plus size={23} /></IconBadge><strong>Add photos and videos</strong><span>One file makes one post. Many files make many posts, each at its own time. Up to 20.</span></button>}
+          {media ? <div className="upload-preview">{mediaType === 'video' ? <video src={media} controls /> : <img src={media} alt="Upload preview" />}<button type="button" onClick={clearMedia}><X size={16} /></button></div> : <button type="button" className="upload-dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files[0]) }}><IconBadge size="lg"><Plus size={23} /></IconBadge><strong>Add photos and videos</strong><span>One file makes one post. Many files make many posts, each at its own time. Up to 20.</span></button>}
           <input ref={inputRef} type="file" hidden accept="image/*,video/*" onChange={(event) => upload(event.target.files?.[0])} />
           <div className="branding-check"><CheckBox checked={branding} onChange={setBranding} label={<span>Add my branding to the photos <small>Your account gets its own name, plus the “For more content, Like and Share” bar. <a href="/app/branding">Change it</a></small></span>} /></div>
           <button type="button" className="link-attachment" onClick={() => { setText((value) => `${value}${value ? '\n' : ''}https://`); notify('Paste your link into the post.', 'info') }}><Link2 size={14} /> Link, picture link, carousel, video link</button>
@@ -130,17 +167,17 @@ export default function NewPost() {
       </div>
       <div className="form-side-column">
         <Card className="form-card" title="Post to" subtitle="Tap the accounts that get this." action={<IconBadge color="blue"><Send size={18} /></IconBadge>}>
-          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
+          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' || account.connectionType === 'instagram' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
         </Card>
         <Card className="form-card" title="First comment" subtitle="Goes under the post, right after it is sent." action={<IconBadge color="pink"><MessageSquare size={18} /></IconBadge>}>
           <CheckBox checked={firstComment} onChange={setFirstComment} label="Add a first comment" />
-          <p className="helper-text">Facebook Pages only for now. Your token needs pages_manage_engagement.</p>
+          <p className="helper-text">Not available for Instagram, Telegram, or X publishing yet.</p>
           {firstComment && <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write your first comment…" />}
         </Card>
         <Card className="form-card when-card" title="When" subtitle="Now, or pick a time." action={<IconBadge color="green"><CalendarClock size={18} /></IconBadge>}>
           <div className="segmented-control"><button type="button" className={when === 'publish' ? 'active' : ''} onClick={() => setWhen('publish')}><Send size={15} /> Publish now</button><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Schedule</button></div>
           {when === 'later' && <Field label="Date and time"><input type="datetime-local" value={schedule} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setSchedule(event.target.value)} /></Field>}
-          <p className="helper-text">{when === 'publish' ? 'Sends immediately through your connected Telegram and X accounts, then saves each result.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
+          <p className="helper-text">{when === 'publish' ? 'Sends immediately through your connected Instagram, Telegram, and X accounts, then saves each result.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
           {error && <div className="form-error">{error}</div>}
           <Button type="submit" size="lg" disabled={publishing} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
         </Card>

@@ -10,6 +10,7 @@ export interface PublishResult {
   externalId?: string
   url?: string
   publishedAt?: string
+  warning?: string
   error?: string
 }
 
@@ -31,7 +32,7 @@ export interface SocialAccount {
   name: string
   handle: string
   status: 'working' | 'paused'
-  connectionType?: 'local' | 'telegram' | 'blogger' | 'x'
+  connectionType?: 'local' | 'telegram' | 'blogger' | 'x' | 'instagram'
   externalId?: string
   botUsername?: string
 }

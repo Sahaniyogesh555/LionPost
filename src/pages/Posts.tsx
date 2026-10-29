@@ -16,7 +16,7 @@ export default function Posts() {
   const navigate = useNavigate()
   const filtered = useMemo(() => posts.filter((post) => (status === 'all' || post.status === status) && (platform === 'all' || post.platforms.includes(platform as never)) && post.text.toLowerCase().includes(query.toLowerCase())), [posts, status, platform, query])
   const exportPosts = () => {
-    const rows = [['Text', 'Platforms', 'Status', 'Created', 'Scheduled', 'Publishing'], ...filtered.map((post) => [post.text, post.platforms.join(', '), post.status, post.createdAt, post.scheduledAt || '', (post.publishResults || []).map((result) => `${result.accountId}: ${result.status}${result.error ? ` (${result.error})` : ''}`).join('; ')])]
+    const rows = [['Text', 'Platforms', 'Status', 'Created', 'Scheduled', 'Publishing'], ...filtered.map((post) => [post.text, post.platforms.join(', '), post.status, post.createdAt, post.scheduledAt || '', (post.publishResults || []).map((result) => `${result.accountId}: ${result.status}${result.warning ? ` (${result.warning})` : ''}${result.error ? ` (${result.error})` : ''}`).join('; ')])]
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
     downloadText('lionpost-posts.csv', csv, 'text/csv')
     notify('Your posts were exported.')
@@ -36,7 +36,7 @@ export default function Posts() {
           const account = accounts.find((item) => item.id === result.accountId)
           const telegramUrl = result.messageId && account?.handle.startsWith('@') ? `https://t.me/${account.handle.slice(1)}/${result.messageId}` : ''
           const publicUrl = result.status === 'sent' ? result.url || telegramUrl : ''
-          return <div key={result.accountId} className={result.status === 'sent' ? 'publish-result-sent' : 'publish-result-failed'}>{result.status === 'sent' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}<strong>{account?.handle || result.platform}</strong><span>{result.status === 'sent' ? 'Published' : result.error || 'Failed'}</span>{publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer">{result.platform === 'Blogger' ? 'View article' : 'View message'}</a>}</div>
+          return <div key={result.accountId} className={result.status === 'sent' ? 'publish-result-sent' : 'publish-result-failed'}>{result.status === 'sent' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}<strong>{account?.handle || result.platform}</strong><span>{result.status === 'sent' ? result.warning || 'Published' : result.error || 'Failed'}</span>{publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer">{result.platform === 'Blogger' ? 'View article' : result.platform === 'Instagram' || result.platform === 'X' ? 'View post' : 'View message'}</a>}</div>
         })}</div>}
         <div className="post-item-actions">{post.status === 'scheduled' && <Button size="sm" onClick={() => { updatePost(post.id, { status: 'sent', scheduledAt: undefined, publishResults: undefined }); notify('Marked as sent in your history. No social network was contacted.', 'info') }} icon={<CheckCircle2 size={13} />}>Mark sent</Button>}<Button size="sm" variant="secondary" icon={<Copy size={13} />} onClick={() => { addPost({ ...post, status: 'draft', scheduledAt: undefined, publishResults: undefined }); notify('A draft copy was created.', 'info') }}>Duplicate</Button><Button size="sm" variant="ghost" icon={<Trash2 size={13} />} onClick={() => { deletePost(post.id); notify('Post deleted.', 'info') }}>Delete</Button></div>
       </div>
