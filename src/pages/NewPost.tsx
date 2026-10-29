@@ -55,7 +55,13 @@ export default function NewPost() {
   const [tiktokOptions, setTikTokOptions] = useState<TikTokOptions | null>(null)
   const [tiktokOptionsError, setTikTokOptionsError] = useState('')
   const [tiktokOptionsLoading, setTikTokOptionsLoading] = useState(false)
-  const [tiktokPrivacy, setTikTokPrivacy] = useState('SELF_ONLY')
+  const [tiktokPrivacy, setTikTokPrivacy] = useState('')
+  const [tiktokAllowComment, setTikTokAllowComment] = useState(false)
+  const [tiktokAllowDuet, setTikTokAllowDuet] = useState(false)
+  const [tiktokAllowStitch, setTikTokAllowStitch] = useState(false)
+  const [tiktokCommercial, setTikTokCommercial] = useState(false)
+  const [tiktokYourBrand, setTikTokYourBrand] = useState(false)
+  const [tiktokBrandedContent, setTikTokBrandedContent] = useState(false)
   const [pinterestBoards, setPinterestBoards] = useState<PinterestBoardOption[]>([])
   const [pinterestBoardsError, setPinterestBoardsError] = useState('')
   const [pinterestBoardsLoading, setPinterestBoardsLoading] = useState(false)
@@ -63,12 +69,17 @@ export default function NewPost() {
   const [videoPrivacy, setVideoPrivacy] = useState<'private' | 'unlisted' | 'public'>('private')
   const [dailymotionVisibility, setDailymotionVisibility] = useState<'private' | 'public'>('private')
   const [madeForKids, setMadeForKids] = useState(false)
+  const [mediaDurationSeconds, setMediaDurationSeconds] = useState(0)
 
   const chosenAccounts = accounts.filter((account) => selected.includes(account.id))
   const tiktokAccount = chosenAccounts.find((account) => account.connectionType === 'tiktok')
   const pinterestAccount = chosenAccounts.find((account) => account.connectionType === 'pinterest')
   const youtubeSelected = chosenAccounts.some((account) => account.connectionType === 'youtube')
   const dailymotionSelected = chosenAccounts.some((account) => account.connectionType === 'dailymotion')
+  const tiktokDisclosureInvalid = when === 'publish' && Boolean(tiktokAccount) && tiktokCommercial && !tiktokYourBrand && !tiktokBrandedContent
+  const tiktokDeclaration = tiktokBrandedContent
+    ? "By posting, you agree to TikTok's Branded Content Policy and Music Usage Confirmation."
+    : "By posting, you agree to TikTok's Music Usage Confirmation."
 
   useEffect(() => () => {
     if (media.startsWith('blob:')) URL.revokeObjectURL(media)
@@ -78,6 +89,13 @@ export default function NewPost() {
     let cancelled = false
     setTikTokOptions(null)
     setTikTokOptionsError('')
+    setTikTokPrivacy('')
+    setTikTokAllowComment(false)
+    setTikTokAllowDuet(false)
+    setTikTokAllowStitch(false)
+    setTikTokCommercial(false)
+    setTikTokYourBrand(false)
+    setTikTokBrandedContent(false)
     if (when !== 'publish' || !tiktokAccount?.id || !session?.access_token) {
       setTikTokOptionsLoading(false)
       return
@@ -86,7 +104,6 @@ export default function NewPost() {
     getTikTokOptions(session.access_token, tiktokAccount.id).then((options) => {
       if (cancelled) return
       setTikTokOptions(options)
-      setTikTokPrivacy((current) => options.privacyLevelOptions.includes(current) ? current : options.privacyLevelOptions.includes('SELF_ONLY') ? 'SELF_ONLY' : options.privacyLevelOptions[0] || '')
       if (!options.privacyLevelOptions.length) setTikTokOptionsError('TikTok returned no privacy option this server is allowed to use. Complete the app audit or reconnect with the required permissions.')
     }).catch((caught) => {
       if (!cancelled) setTikTokOptionsError(caught instanceof Error ? caught.message : 'TikTok creator options could not be loaded.')
@@ -123,12 +140,16 @@ export default function NewPost() {
     if (file.type.startsWith('video/')) {
       if (file.size > 100 * 1024 * 1024) return notify('Please choose a video smaller than 100 MB.', 'error')
       setMediaType('video')
+      setMediaDurationSeconds(0)
       setMediaFile(file)
       setMedia(URL.createObjectURL(file))
       return
     }
     if (file.size > 3 * 1024 * 1024) return notify('For local saving, please choose an image smaller than 3 MB.', 'error')
     setMediaType('image')
+    setMediaDurationSeconds(0)
+    setTikTokAllowDuet(false)
+    setTikTokAllowStitch(false)
     setMediaFile(file)
     setMedia(await readFileAsDataUrl(file))
   }
@@ -136,6 +157,7 @@ export default function NewPost() {
   const clearMedia = () => {
     setMedia('')
     setMediaFile(null)
+    setMediaDurationSeconds(0)
     if (inputRef.current) inputRef.current.value = ''
   }
 
@@ -175,6 +197,10 @@ export default function NewPost() {
         if (tiktokOptionsLoading) return setError('Wait for the current TikTok privacy options to load.')
         if (tiktokOptionsError) return setError(tiktokOptionsError)
         if (!tiktokOptions || !tiktokPrivacy || !tiktokOptions.privacyLevelOptions.includes(tiktokPrivacy)) return setError('Choose a current TikTok privacy option before publishing.')
+        if (tiktokDisclosureInvalid) return setError('You need to indicate if your content promotes yourself, a third party, or both.')
+        if (tiktokBrandedContent && tiktokPrivacy === 'SELF_ONLY') return setError('Branded content visibility cannot be set to private.')
+        const maximumDuration = tiktokOptions.maxVideoPostDurationSec || 0
+        if (mediaType === 'video' && maximumDuration && mediaDurationSeconds > maximumDuration + 0.001) return setError(`This video is ${mediaDurationSeconds.toFixed(1)} seconds long, but this TikTok creator allows at most ${maximumDuration} seconds.`)
       }
       if (pinterestAccounts.length) {
         if (pinterestBoardsLoading) return setError('Wait for your Pinterest boards to load.')
@@ -231,6 +257,12 @@ export default function NewPost() {
               mediaType: mediaFile ? mediaType : undefined,
               cleanupMedia: false,
               privacyLevel: tiktokPrivacy,
+              tiktokAllowComment,
+              tiktokAllowDuet,
+              tiktokAllowStitch,
+              tiktokCommercial,
+              tiktokYourBrand,
+              tiktokBrandedContent,
               boardId: pinterestBoard,
               videoPrivacy,
               dailymotionVisibility,
@@ -283,16 +315,43 @@ export default function NewPost() {
           <div className="field-heading-row"><Field label="Post text" /><button type="button" className="ai-write-button" onClick={generateText} disabled={generating}>{generating ? <span className="spinner" /> : <Sparkles size={14} />} {generating ? 'Writing with Gemini…' : 'Write with Gemini'}</button></div>
           <textarea className="post-textarea" value={text} onChange={(event) => setText(event.target.value)} placeholder="What do you want to say?" maxLength={2200} />
           <div className="character-row"><span>Provider limits are checked before publishing.</span><span>{text.length} / 2200</span></div>
-          {media ? <div className="upload-preview">{mediaType === 'video' ? <video src={media} controls /> : <img src={media} alt="Upload preview" />}<button type="button" onClick={clearMedia}><X size={16} /></button></div> : <button type="button" className="upload-dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files[0]) }}><IconBadge size="lg"><Plus size={23} /></IconBadge><strong>Add a photo or video</strong><span>Connected publishing uses one file per post. Photos are converted to JPEG; videos up to 100 MB.</span></button>}
+          {media ? <div className="upload-preview">{mediaType === 'video' ? <video src={media} controls onLoadedMetadata={(event) => setMediaDurationSeconds(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)} /> : <img src={media} alt="Upload preview" />}<button type="button" onClick={clearMedia}><X size={16} /></button></div> : <button type="button" className="upload-dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files[0]) }}><IconBadge size="lg"><Plus size={23} /></IconBadge><strong>Add a photo or video</strong><span>Connected publishing uses one file per post. Photos are converted to JPEG; videos up to 100 MB.</span></button>}
           <input ref={inputRef} type="file" hidden accept="image/*,video/mp4,video/quicktime" onChange={(event) => upload(event.target.files?.[0])} />
-          <div className="branding-check"><CheckBox checked={branding} onChange={setBranding} label={<span>Add my branding to the photos <small>Your account gets its own name, plus the “For more content, Like and Share” bar. <a href="/app/branding">Change it</a></small></span>} /></div>
+          {(!tiktokAccount || when !== 'publish') && <div className="branding-check"><CheckBox checked={branding} onChange={setBranding} label={<span>Add my branding to the photos <small>Your account gets its own name, plus the “For more content, Like and Share” bar. <a href="/app/branding">Change it</a></small></span>} /></div>}
           <button type="button" className="link-attachment" onClick={() => { setText((value) => `${value}${value ? '\n' : ''}https://`); notify('Paste your link into the post.', 'info') }}><Link2 size={14} /> Link, picture link, carousel, video link</button>
         </Card>
       </div>
       <div className="form-side-column">
         <Card className="form-card" title="Post to" subtitle="Tap the accounts that get this." action={<IconBadge color="blue"><Send size={18} /></IconBadge>}>
           {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{isConnectedAccount(account) ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
-          {when === 'publish' && tiktokAccount && <Field label="TikTok privacy" hint={tiktokOptions?.publicPosting ? 'Options come directly from this TikTok creator.' : 'Private-only until the TikTok app audit. Photos also require LionPost URL/domain verification in TikTok.'}><select value={tiktokPrivacy} onChange={(event) => setTikTokPrivacy(event.target.value)} disabled={tiktokOptionsLoading || !!tiktokOptionsError}><option value="">{tiktokOptionsLoading ? 'Loading creator options…' : 'Choose privacy'}</option>{(tiktokOptions?.privacyLevelOptions || []).map((option) => <option value={option} key={option}>{privacyLabels[option] || option}</option>)}</select></Field>}
+          {when === 'publish' && tiktokAccount && <>
+            <p className="provider-creator">Latest TikTok creator: <strong>{tiktokOptions?.creatorNickname || tiktokAccount.name || tiktokAccount.handle}</strong></p>
+            {mediaType === 'video' && media && tiktokOptions?.maxVideoPostDurationSec ? <p className="helper-text">This creator’s maximum TikTok video length is {tiktokOptions.maxVideoPostDurationSec} seconds{mediaDurationSeconds ? `; your video is ${mediaDurationSeconds.toFixed(1)} seconds` : ''}.</p> : null}
+            <Field label="TikTok privacy" hint={tiktokOptions?.publicPosting ? 'Options come directly from this TikTok creator. Choose one manually.' : 'Private-only until the TikTok app audit. Photos also require LionPost URL/domain verification in TikTok. Choose privacy manually.'}>
+              <select value={tiktokPrivacy} onChange={(event) => setTikTokPrivacy(event.target.value)} disabled={tiktokOptionsLoading || !!tiktokOptionsError}>
+                <option value="">{tiktokOptionsLoading ? 'Loading creator options…' : 'Choose privacy'}</option>
+                {(tiktokOptions?.privacyLevelOptions || []).map((option) => <option value={option} key={option} disabled={option === 'SELF_ONLY' && tiktokBrandedContent} title={option === 'SELF_ONLY' && tiktokBrandedContent ? 'Branded content visibility cannot be set to private.' : undefined}>{privacyLabels[option] || option}</option>)}
+              </select>
+            </Field>
+            <div className="provider-options-group">
+              <span className="eyebrow">TikTok interactions</span>
+              <CheckBox checked={tiktokAllowComment} onChange={setTikTokAllowComment} disabled={!tiktokOptions || tiktokOptions.commentDisabled} label="Allow Comment" />
+              {mediaType === 'video' && <>
+                <CheckBox checked={tiktokAllowDuet} onChange={setTikTokAllowDuet} disabled={!tiktokOptions || tiktokOptions.duetDisabled} label="Allow Duet" />
+                <CheckBox checked={tiktokAllowStitch} onChange={setTikTokAllowStitch} disabled={!tiktokOptions || tiktokOptions.stitchDisabled} label="Allow Stitch" />
+              </>}
+              <p className="helper-text">Interactions are off until you turn them on. Unavailable options are disabled by this creator’s TikTok settings.</p>
+            </div>
+            <div className="provider-options-group">
+              <span className="eyebrow">TikTok content disclosure</span>
+              <CheckBox checked={tiktokCommercial} onChange={(checked) => { setTikTokCommercial(checked); if (!checked) { setTikTokYourBrand(false); setTikTokBrandedContent(false) } }} label={<span>Commercial content <small>Indicate whether this content promotes yourself, a brand, product or service.</small></span>} />
+              {tiktokCommercial && <>
+                <CheckBox checked={tiktokYourBrand} onChange={setTikTokYourBrand} label={<span>Your brand <small>{tiktokBrandedContent ? "Your photo/video will be labeled as 'Paid partnership'" : tiktokYourBrand ? "Your photo/video will be labeled as 'Promotional content'" : 'You are promoting yourself or your own business.'}</small></span>} />
+                <CheckBox checked={tiktokBrandedContent} onChange={setTikTokBrandedContent} disabled={tiktokPrivacy === 'SELF_ONLY'} label={<span>Branded content <small>{tiktokPrivacy === 'SELF_ONLY' ? 'Branded content visibility cannot be set to private.' : tiktokBrandedContent ? "Your photo/video will be labeled as 'Paid partnership'" : 'You are promoting another brand or a third party.'}</small></span>} />
+                {tiktokDisclosureInvalid && <p className="form-error">You need to indicate if your content promotes yourself, a third party, or both.</p>}
+              </>}
+            </div>
+          </>}
           {when === 'publish' && tiktokOptionsError && <div className="form-error">{tiktokOptionsError}</div>}
           {when === 'publish' && pinterestAccount && <Field label="Pinterest board" hint="Boards are loaded live from the connected Pinterest account."><select value={pinterestBoard} onChange={(event) => setPinterestBoard(event.target.value)} disabled={pinterestBoardsLoading || !!pinterestBoardsError}><option value="">{pinterestBoardsLoading ? 'Loading boards…' : 'Choose a board'}</option>{pinterestBoards.map((board) => <option value={board.id} key={board.id}>{board.name}{board.privacy ? ` · ${board.privacy.toLowerCase()}` : ''}</option>)}</select></Field>}
           {when === 'publish' && pinterestBoardsError && <div className="form-error">{pinterestBoardsError}</div>}
@@ -309,8 +368,9 @@ export default function NewPost() {
           <div className="segmented-control"><button type="button" className={when === 'publish' ? 'active' : ''} onClick={() => setWhen('publish')}><Send size={15} /> Publish now</button><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Schedule</button></div>
           {when === 'later' && <Field label="Date and time"><input type="datetime-local" value={schedule} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setSchedule(event.target.value)} /></Field>}
           <p className="helper-text">{when === 'publish' ? 'Sends immediately through your connected accounts and saves an individual result for every destination.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
+          {when === 'publish' && tiktokAccount && <div className="provider-declaration"><p>{tiktokDeclaration}</p><small>TikTok may take a few minutes to process and show this content on your profile. LionPost checks the processing status before saving the result.</small></div>}
           {error && <div className="form-error">{error}</div>}
-          <Button type="submit" size="lg" disabled={publishing} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
+          <Button type="submit" size="lg" disabled={publishing || tiktokDisclosureInvalid} title={tiktokDisclosureInvalid ? 'You need to indicate if your content promotes yourself, a third party, or both.' : undefined} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
         </Card>
       </div>
     </form>

@@ -9,6 +9,12 @@ export interface ProviderPublishInput {
   mediaType?: 'image' | 'video'
   cleanupMedia?: boolean
   privacyLevel?: string
+  tiktokAllowComment?: boolean
+  tiktokAllowDuet?: boolean
+  tiktokAllowStitch?: boolean
+  tiktokCommercial?: boolean
+  tiktokYourBrand?: boolean
+  tiktokBrandedContent?: boolean
   boardId?: string
   videoPrivacy?: 'private' | 'unlisted' | 'public'
   dailymotionVisibility?: 'private' | 'public'
@@ -16,6 +22,8 @@ export interface ProviderPublishInput {
 }
 
 export interface TikTokOptions {
+  creatorNickname: string
+  creatorUsername: string
   privacyLevelOptions: string[]
   publicPosting: boolean
   commentDisabled: boolean

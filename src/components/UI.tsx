@@ -46,8 +46,8 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   return <label className="toggle-row"><button type="button" role="switch" aria-checked={checked} className={`toggle ${checked ? 'is-on' : ''}`} onClick={() => onChange(!checked)}><span /></button>{label && <span>{label}</span>}</label>
 }
 
-export function CheckBox({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: ReactNode }) {
-  return <label className="checkbox-row"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /><span className="custom-check">{checked && <Check size={13} strokeWidth={3} />}</span><span>{label}</span></label>
+export function CheckBox({ checked, onChange, label, disabled = false }: { checked: boolean; onChange: (checked: boolean) => void; label: ReactNode; disabled?: boolean }) {
+  return <label className={`checkbox-row ${disabled ? 'disabled' : ''}`}><input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className="custom-check">{checked && <Check size={13} strokeWidth={3} />}</span><span>{label}</span></label>
 }
 
 export function Modal({ open, onClose, title, children, className = '' }: { open: boolean; onClose: () => void; title: string; children: ReactNode; className?: string }) {

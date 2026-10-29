@@ -39,7 +39,7 @@ npm run preview
 - **X:** OAuth 2.0 + PKCE, encrypted refresh-token handling, account discovery, disconnect, and real text publishing. X is user-confirmed working; media is not currently supported.
 - **Instagram:** Instagram API with Unified Login, professional-account discovery, encrypted Business Integration System User tokens, JPEG photos, MP4/MOV Reels, container processing, and permalinks.
 - **Facebook Pages:** Facebook Login for Business, long-lived user/Page tokens, manageable-Page discovery, text posts, photos, and MP4 video upload through Meta's Resumable Upload API.
-- **TikTok:** Login Kit OAuth, encrypted refresh tokens, live creator privacy options, Direct Post status polling, chunked MP4/MOV video upload, and photo posts through a signed LionPost media URL.
+- **TikTok:** Login Kit OAuth, encrypted refresh tokens, live creator nickname/privacy/interaction options, manual privacy selection, commercial-content disclosures, creator-specific video-duration checks, Direct Post status polling, chunked MP4/MOV video upload, and photo posts through a signed LionPost media URL.
 - **YouTube:** A dedicated Google OAuth client, encrypted refresh tokens, channel discovery, resumable video upload, visibility controls, and the creator's made-for-kids declaration.
 - **Pinterest:** OAuth with encrypted refresh tokens, live board selection, and image Pin creation using a private upload converted to JPEG and sent as Base64.
 - **Dailymotion:** API v2 private-key validation, encrypted user-supplied key/secret storage, manageable-profile discovery, upload sessions, visibility/category metadata, and made-for-kids declarations.
@@ -88,7 +88,7 @@ Facebook text and photo posts use the Pages API. Video uploads require MP4 and u
 1. Create a TikTok developer app with **Login Kit** and **Content Posting API / Direct Post**. Request `user.info.basic` and `video.publish`.
 2. Register `https://lionpost.vercel.app/api/tiktok/callback` as a Login Kit redirect URI.
 3. Set `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET`. Keep `TIKTOK_PUBLIC_POSTING=false` initially.
-4. Before every post, LionPost queries TikTok's creator-info endpoint and displays the currently allowed privacy choices. The server validates the choice again before publishing.
+4. Before every post, LionPost queries TikTok's creator-info endpoint and displays the latest creator nickname, currently allowed privacy choices, interaction availability, and maximum video duration. Privacy has no default; interactions and commercial disclosure are opt-in. Photo posts expose Allow Comment only. The server revalidates creator settings, branded-content visibility, disclosure choices, and the MP4/MOV movie duration before sending content to TikTok.
 5. **Videos:** MP4/MOV bytes are uploaded directly to TikTok in chunks; no media-domain verification is needed for this transfer mode.
 6. **Photos:** TikTok permits `PULL_FROM_URL` only for photo posts. Verify `https://lionpost.vercel.app` or the narrower `https://lionpost.vercel.app/api/tiktok/media` URL prefix in the TikTok app's URL properties, as applicable. LionPost then serves the owner's private image through a two-hour HMAC-signed URL. Without TikTok URL verification, video publishing can work while photo publishing correctly fails.
 7. Unaudited TikTok clients are restricted by TikTok, including private-only posting and test-user limits. After a successful audit, set `TIKTOK_PUBLIC_POSTING=true` to expose the creator's non-private options. This variable cannot bypass TikTok's own enforcement.
