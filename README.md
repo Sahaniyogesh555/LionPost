@@ -81,6 +81,7 @@ The test requires the server environment and outbound Supabase access. It create
 
 - `/` — landing page
 - `/login`, `/signup`, `/reset-password` — authentication
+- `/privacy`, `/terms` — public privacy policy and terms of service
 - `/app` — protected dashboard
 - `/app/new-post` — composer and Telegram publishing
 - `/app/posts` — post history and publish results

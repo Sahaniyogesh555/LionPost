@@ -19,6 +19,7 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import { Plans, Trending } from './pages/ToolsPages'
+import { PrivacyPolicy, TermsOfService } from './pages/Legal'
 
 function WorkspaceGate() {
   const { session, loading } = useAuth()
@@ -34,6 +35,8 @@ export default function App() {
     <Route path="/login" element={<Auth mode="login" />} />
     <Route path="/signup" element={<Auth mode="signup" />} />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
+    <Route path="/terms" element={<TermsOfService />} />
     <Route path="/app" element={<WorkspaceGate />}>
       <Route index element={<Home />} />
       <Route path="new-post" element={<NewPost />} />

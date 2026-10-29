@@ -91,7 +91,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
           {message && <div className="form-success">{message}</div>}
           <Button type="submit" size="lg" disabled={loading}>{loading ? <span className="spinner" /> : null}{loading ? 'Just a moment…' : isSignup ? 'Make account' : 'Log in'}</Button>
         </form>
-        {isSignup ? <small className="auth-terms">By making an account you agree to our <a href="#terms">Terms</a> and <a href="#privacy">Privacy Policy</a>.</small> : <button className="forgot-link" onClick={forgotPassword} disabled={loading}>Forgot your password?</button>}
+        {isSignup ? <small className="auth-terms">By making an account you agree to our <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</small> : <button className="forgot-link" onClick={forgotPassword} disabled={loading}>Forgot your password?</button>}
         <div className="auth-switch">{isSignup ? <>Have an account? <Link to="/login">Log in</Link></> : <>New here? <Link to="/signup">Make a free account</Link></>}</div>
       </>}
     </section>
