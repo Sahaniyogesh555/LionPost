@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom'
 
 export function BrandMark({ size = 38 }: { size?: number }) {
   return (
-    <span className="brand-mark" style={{ width: size, height: size, fontSize: size * 0.58 }} aria-hidden="true">
-      L
+    <span className="brand-mark" style={{ width: size, height: size }} aria-hidden="true">
+      <img src="/branding/lionpost-mark.webp" alt="" width={size} height={size} />
     </span>
   )
 }

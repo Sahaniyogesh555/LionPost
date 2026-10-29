@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, ChevronDown, Sparkles } from 'lucide-react'
-import Logo, { BrandMark } from '../components/Logo'
+import Logo from '../components/Logo'
 import PlatformIcon from '../components/PlatformIcon'
 import ToolIcon from '../components/ToolIcon'
 import { Button } from '../components/UI'
@@ -37,8 +37,7 @@ export default function Landing() {
             <div className="hero-benefits"><span><Check /> {tools.length} free tools</span><span><Check /> No monthly plan</span><span><Check /> One account for everything</span></div>
           </div>
           <div className="hero-brand-card">
-            <div className="hero-mark-wrap"><BrandMark size={150} /></div>
-            <h2>LionPost</h2>
+            <div className="hero-mark-wrap"><img className="hero-logo-full" src="/branding/lionpost-logo.webp" alt="LionPost — manage your social media" width={640} height={640} /></div>
             <p>One account. Every tool. Built to help you publish.</p>
             <div className="hero-socials">{['Facebook', 'Instagram', 'X', 'Pinterest', 'Telegram', 'TikTok', 'YouTube'].map((platform) => <PlatformIcon key={platform} platform={platform} size="sm" />)}</div>
           </div>
