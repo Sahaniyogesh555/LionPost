@@ -8,6 +8,8 @@ import { Button, Card, CheckBox, Field, IconBadge, PageHeader } from '../compone
 import { readFileAsDataUrl } from '../utils'
 import { generateSocialDraft } from '../services/gemini'
 import { publishToTelegram } from '../services/telegram'
+import { publishToX } from '../services/x'
+import type { PublishResult } from '../types'
 
 export default function NewPost() {
   const { accounts, addPost, notify } = useApp()
@@ -55,18 +57,36 @@ export default function NewPost() {
     if (when === 'later' && !schedule) return setError('Pick a date and time for your post.')
     if (when === 'publish') {
       if (!session?.access_token) return setError('Sign in again before publishing.')
-      if (chosenAccounts.some((account) => account.connectionType !== 'telegram')) return setError('This composer publishes to connected Telegram accounts only. Use the dedicated Blogger page for articles, or remove other profiles from this selection.')
+      const telegramAccounts = chosenAccounts.filter((account) => account.connectionType === 'telegram')
+      const xAccounts = chosenAccounts.filter((account) => account.connectionType === 'x')
+      if (telegramAccounts.length + xAccounts.length !== chosenAccounts.length) return setError('This composer publishes to connected Telegram and X accounts. Use the dedicated Blogger page for articles, or remove other profiles from this selection.')
+      if (xAccounts.length && media) return setError('X publishing currently supports text posts only. Remove the media or remove the X account from this selection.')
+      if (xAccounts.length && Array.from(text.trim()).length > 280) return setError('X posts can contain at most 280 characters. Shorten this post or remove the X account from this selection.')
       if (mediaType === 'video' && media) return setError('Telegram video publishing is not connected yet. Choose an image or save a draft.')
-      if (firstComment && comment.trim()) return setError('First comments are not supported by Telegram publishing yet. Turn that option off first.')
+      if (firstComment && comment.trim()) return setError('First comments are not supported by Telegram or X publishing yet. Turn that option off first.')
       setPublishing(true)
+      const results: PublishResult[] = []
       try {
-        const results = await publishToTelegram(session.access_token, { accountIds: chosenAccounts.map((account) => account.id), text: text.trim(), image: media || undefined })
+        if (telegramAccounts.length) {
+          try {
+            results.push(...await publishToTelegram(session.access_token, { accountIds: telegramAccounts.map((account) => account.id), text: text.trim(), image: media || undefined }))
+          } catch (caught) {
+            const message = caught instanceof Error ? caught.message : 'Telegram publishing failed.'
+            results.push(...telegramAccounts.map((account) => ({ accountId: account.id, platform: 'Telegram' as const, status: 'failed' as const, error: message })))
+          }
+        }
+        if (xAccounts.length) {
+          try {
+            results.push(...await publishToX(session.access_token, { accountIds: xAccounts.map((account) => account.id), text: text.trim() }))
+          } catch (caught) {
+            const message = caught instanceof Error ? caught.message : 'X publishing failed.'
+            results.push(...xAccounts.map((account) => ({ accountId: account.id, platform: 'X' as const, status: 'failed' as const, error: message })))
+          }
+        }
         const failed = results.filter((result) => result.status === 'failed').length
-        addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: failed ? 'failed' : 'sent', image: media || undefined, publishResults: results })
-        notify(failed ? `${results.length - failed} published; ${failed} failed. Open Posts for the Telegram errors.` : `Published to ${results.length} Telegram ${results.length === 1 ? 'account' : 'accounts'}.`, failed ? 'error' : 'success')
+        addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: failed ? 'failed' : 'sent', image: mediaType === 'image' ? media || undefined : undefined, publishResults: results })
+        notify(failed ? `${results.length - failed} published; ${failed} failed. Open Posts for the provider errors.` : `Published to ${results.length} ${results.length === 1 ? 'account' : 'accounts'}.`, failed ? 'error' : 'success')
         navigate('/app/posts')
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Telegram publishing failed.')
       } finally {
         setPublishing(false)
       }
@@ -110,7 +130,7 @@ export default function NewPost() {
       </div>
       <div className="form-side-column">
         <Card className="form-card" title="Post to" subtitle="Tap the accounts that get this." action={<IconBadge color="blue"><Send size={18} /></IconBadge>}>
-          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' || account.connectionType === 'blogger' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
+          {accounts.length ? <div className="account-selector">{accounts.map((account) => <button type="button" key={account.id} className={selected.includes(account.id) ? 'selected' : ''} onClick={() => setSelected((items) => items.includes(account.id) ? items.filter((id) => id !== account.id) : [...items, account.id])}><PlatformIcon platform={account.platform} size="sm" /><span>{account.handle}<small>{account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' ? 'Connected' : 'Draft only'}</small></span>{selected.includes(account.id) && <Check size={15} />}</button>)}</div> : <div className="inline-empty">No accounts yet. <a href="/app/accounts">Add one first</a>.</div>}
         </Card>
         <Card className="form-card" title="First comment" subtitle="Goes under the post, right after it is sent." action={<IconBadge color="pink"><MessageSquare size={18} /></IconBadge>}>
           <CheckBox checked={firstComment} onChange={setFirstComment} label="Add a first comment" />
@@ -120,9 +140,9 @@ export default function NewPost() {
         <Card className="form-card when-card" title="When" subtitle="Now, or pick a time." action={<IconBadge color="green"><CalendarClock size={18} /></IconBadge>}>
           <div className="segmented-control"><button type="button" className={when === 'publish' ? 'active' : ''} onClick={() => setWhen('publish')}><Send size={15} /> Publish now</button><button type="button" className={when === 'draft' ? 'active' : ''} onClick={() => setWhen('draft')}><FileImage size={15} /> Draft</button><button type="button" className={when === 'later' ? 'active' : ''} onClick={() => setWhen('later')}><CalendarClock size={15} /> Schedule</button></div>
           {when === 'later' && <Field label="Date and time"><input type="datetime-local" value={schedule} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setSchedule(event.target.value)} /></Field>}
-          <p className="helper-text">{when === 'publish' ? 'Sends immediately through your Telegram bot and saves each account’s result.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
+          <p className="helper-text">{when === 'publish' ? 'Sends immediately through your connected Telegram and X accounts, then saves each result.' : 'Saved to your cloud workspace. Background scheduling is not connected yet.'}</p>
           {error && <div className="form-error">{error}</div>}
-          <Button type="submit" size="lg" disabled={publishing} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing to Telegram…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
+          <Button type="submit" size="lg" disabled={publishing} icon={when === 'publish' ? <Send size={17} /> : when === 'draft' ? <Check size={17} /> : <CalendarClock size={17} />}>{publishing ? 'Publishing…' : when === 'publish' ? 'Publish now' : when === 'draft' ? 'Save draft' : 'Save to schedule'}</Button>
         </Card>
       </div>
     </form>

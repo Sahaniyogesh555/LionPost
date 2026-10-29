@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext'
 import { cloud, loadWorkspace, saveWorkspace, type CloudWorkspace } from '../services/cloud'
 import { disconnectTelegramAccount } from '../services/telegram'
 import { disconnectBloggerAccount } from '../services/blogger'
+import { disconnectXAccount } from '../services/x'
 
 const defaultProfile: UserProfile = { name: '', email: '', about: '', website: '', phone: '', country: '' }
 const OWNER_KEY = 'lionpost-workspace-owner'
@@ -259,10 +260,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeAccount: async (id) => {
       const account = accounts.find((item) => item.id === id)
       if (!account) return false
-      if (account.connectionType === 'telegram' || account.connectionType === 'blogger') {
+      if (account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x') {
         const saved = await runCloud(async (userId, accessToken) => {
           if (account.connectionType === 'telegram') await disconnectTelegramAccount(accessToken, id)
-          else await disconnectBloggerAccount(accessToken, id)
+          else if (account.connectionType === 'blogger') await disconnectBloggerAccount(accessToken, id)
+          else await disconnectXAccount(accessToken, id)
           await cloud.deleteAccount(userId, id)
         })
         if (!saved) {

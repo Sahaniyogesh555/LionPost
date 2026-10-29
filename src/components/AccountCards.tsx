@@ -7,7 +7,7 @@ import type { Platform, SocialAccount } from '../types'
 export const platformDetails: { platform: Platform; title: string; description: string }[] = [
   { platform: 'Facebook', title: 'Facebook Page', description: 'Post to your Facebook Page with a System User token.' },
   { platform: 'Instagram', title: 'Instagram', description: 'Business or Creator account, through your own Meta app.' },
-  { platform: 'X', title: 'X (Twitter)', description: 'Post with one browser cookie. No paid API, no developer app.' },
+  { platform: 'X', title: 'X (Twitter)', description: 'Connect with official OAuth and publish text posts through your own X developer app.' },
   { platform: 'Pinterest', title: 'Pinterest', description: 'One click connect. Pins are public, no app to make.' },
   { platform: 'Telegram', title: 'Telegram', description: 'Post to your channel or group through your own bot.' },
   { platform: 'TikTok', title: 'TikTok', description: 'Post straight to your TikTok profile, or send it over and post.' },
@@ -18,7 +18,7 @@ export default function AccountCards({ accounts, onAdd }: { accounts: SocialAcco
   const navigate = useNavigate()
   return <div className="account-platform-grid">{platformDetails.map(({ platform, title, description }) => {
     const added = accounts.filter((account) => account.platform === platform).length
-    const comingSoon = platform !== 'Telegram'
+    const comingSoon = platform !== 'Telegram' && platform !== 'X'
     return <article className={`account-platform-card platform-card-${platform.toLowerCase()}`} key={platform}>
       <span className={`account-status ${added ? 'connected' : ''}`}>{added ? `● ${added} of 3 added` : 'Not added'}</span>
       <PlatformIcon platform={platform} size="lg" />

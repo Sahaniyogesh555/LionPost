@@ -15,7 +15,7 @@ export const tools: ToolDefinition[] = [
   { name: 'Shorts Maker', description: 'Turn one long video into up to five short clips.', path: '/app/shorts-maker', icon: 'shorts', color: 'orange', badge: 'NEW' },
   { name: 'Video Translator', description: 'Translate your video with a natural AI voice.', path: '/app/video-translator', icon: 'translate', color: 'blue', badge: 'NEW' },
   { name: 'Pinterest auto post', description: 'Fresh, useful pins while you focus on creating.', path: '/app/pin-affiliate', icon: 'pinterest', color: 'red', badge: 'Coming soon' },
-  { name: 'X (Twitter) auto post', description: 'Write once and publish to X without the busywork.', path: '/app/auto-post', icon: 'x', color: 'black', badge: 'Coming soon' },
+  { name: 'X (Twitter) auto post', description: 'Write once and publish text posts to X without the busywork.', path: '/app/auto-post', icon: 'x', color: 'black' },
   { name: 'Carousel maker', description: 'Design a useful carousel for Instagram and Facebook.', path: '/app/pin-maker', icon: 'carousel', color: 'pink' },
   { name: 'Website to social', description: 'Send every new article to your social channels.', path: '/app/website', icon: 'website', color: 'green' },
   { name: 'Telegram channel auto post', description: 'Keep your channel useful, active and consistent.', path: '/app/auto-post', icon: 'telegram', color: 'blue' },

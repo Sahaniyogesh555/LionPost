@@ -31,7 +31,7 @@ export interface SocialAccount {
   name: string
   handle: string
   status: 'working' | 'paused'
-  connectionType?: 'local' | 'telegram' | 'blogger'
+  connectionType?: 'local' | 'telegram' | 'blogger' | 'x'
   externalId?: string
   botUsername?: string
 }
