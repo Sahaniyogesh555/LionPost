@@ -149,7 +149,7 @@ export async function beginX(request: ApiRequest) {
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
     response_type: 'code',
-    scope: 'tweet.write users.read offline.access',
+    scope: 'tweet.read tweet.write users.read offline.access',
     state: createState(user.id, verifier),
     code_challenge: challenge,
     code_challenge_method: 'S256',
@@ -168,7 +168,7 @@ export async function completeX(request: ApiRequest) {
     const config = xConfig()
     const token = await tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: config.redirectUri, code_verifier: verifier })
     const scopes = new Set((token.scope || '').split(/\s+/).filter(Boolean))
-    if (!scopes.has('tweet.write') || !scopes.has('users.read')) throw new ApiError(400, 'X did not grant the required posting permissions. Reconnect and approve all requested permissions.')
+    if (!scopes.has('tweet.read') || !scopes.has('tweet.write') || !scopes.has('users.read')) throw new ApiError(400, 'X did not grant the required posting and profile permissions. Reconnect and approve all requested permissions.')
     if (!token.access_token) throw new ApiError(400, 'X did not return an access token.')
     const response = await xRequest<{ data?: XUser }>('https://api.x.com/2/users/me', { headers: { Authorization: `Bearer ${token.access_token}`, Accept: 'application/json' } })
     if (!response.data?.id || !response.data.username) throw new ApiError(400, 'X returned an incomplete account profile.')
