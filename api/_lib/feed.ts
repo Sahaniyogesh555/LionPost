@@ -120,7 +120,7 @@ async function fetchText(source: string, allowPrivate: boolean): Promise<{ text:
         redirect: 'manual',
         signal: controller.signal,
         headers: {
-          'user-agent': 'LionPostFeedReader/1.0 (+https://alphapost-preview.vercel.app)',
+          'user-agent': 'LionPostFeedReader/1.0 (+https://lionpost.vercel.app)',
           accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.5',
         },
       })

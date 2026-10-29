@@ -2,6 +2,8 @@
 
 A responsive React implementation of the authentic LionPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and Telegram publishing.
 
+**Production:** https://lionpost.vercel.app
+
 ## Run locally
 
 ```bash
@@ -44,7 +46,7 @@ The Blogger workflow is implemented, but Google does not allow publishing withou
 
 1. In Google Cloud, enable **Blogger API v3** and configure the OAuth consent screen.
 2. Create an OAuth client of type **Web application**.
-3. Add this authorized redirect URI: `https://alphapost-preview.vercel.app/api/blogger/callback`. For local development, also add `http://localhost:5173/api/blogger/callback`.
+3. Add this authorized redirect URI: `https://lionpost.vercel.app/api/blogger/callback`. For local development, also add `http://localhost:5173/api/blogger/callback`.
 4. Set `APP_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` in the server environment. Keep the client secret sensitive and never expose it with a `VITE_` variable.
 5. If the Google consent app is in testing mode, add each connecting Google account as a test user. Google verification requirements can apply to public apps using Blogger scopes.
 

@@ -123,6 +123,9 @@ try {
 
   const oauth = await beginBlogger(authRequest(a.token, {}))
   const oauthUrl = new URL(oauth.url)
+  const expectedBloggerCallback = `${process.env.APP_URL}/api/blogger/callback`
+  assert.equal(oauth.redirectUri, expectedBloggerCallback)
+  assert.equal(oauthUrl.searchParams.get('redirect_uri'), expectedBloggerCallback)
   assert.equal(oauthUrl.hostname, 'accounts.google.com')
   assert.equal(oauthUrl.searchParams.get('access_type'), 'offline')
   const state = oauthUrl.searchParams.get('state') || ''
