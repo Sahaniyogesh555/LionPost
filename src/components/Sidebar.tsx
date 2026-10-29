@@ -14,11 +14,11 @@ const navItems = [
   { label: 'Accounts', path: '/app/accounts', icon: Link2, color: 'dark' },
   { label: 'Video automation', path: '/app/video-automation', icon: Video, color: 'red' },
   { label: 'Shorts Maker', path: '/app/shorts-maker', icon: Scissors, color: 'orange', badge: 'NEW' },
-  { label: 'Pin Affiliate', path: '/app/pin-affiliate', icon: Pin, color: 'red', badge: 'NEW' },
+  { label: 'Pin Affiliate', path: '/app/pin-affiliate', icon: Pin, color: 'red', badge: 'Coming soon' },
   { label: 'Pin Maker', path: '/app/pin-maker', icon: Pin, color: 'red', badge: 'NEW' },
   { label: 'Video Translator', path: '/app/video-translator', icon: Languages, color: 'blue', badge: 'NEW' },
   { label: 'Blogger', path: '/app/blogger', icon: Bold, color: 'orange', badge: 'NEW' },
-  { label: 'Bee TikTok', path: '/app/bee-tiktok', icon: Music2, color: 'black', badge: 'NEW' },
+  { label: 'Bee TikTok', path: '/app/bee-tiktok', icon: Music2, color: 'black', badge: 'Coming soon' },
 ]
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {

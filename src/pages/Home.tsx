@@ -23,6 +23,8 @@ const homeTools = [
   ['Blogger', 'Full articles on your own blog', '/app/blogger', 'blogger', 'orange'],
 ]
 
+const comingSoonHomeTools = new Set(['Bee TikTok', 'Pin Affiliate'])
+
 export default function Home() {
   const { profile, posts, accounts, notify } = useApp()
   const navigate = useNavigate()
@@ -58,7 +60,7 @@ export default function Home() {
       <MiniStat value={failed} label="Failed, last 30 days" icon={<CircleX size={18} />} color="red" />
     </div>
 
-    <div className="home-tools-grid">{homeTools.map(([title, description, path, icon, color], index) => <Link to={path} className="home-tool-card" key={title}><ToolIcon name={icon} color={color} /><div><h3>{title}</h3><p>{description}</p></div>{[1, 4, 5, 6, 7, 8, 9, 10].includes(index) && <span className="new-badge">NEW</span>}</Link>)}</div>
+    <div className="home-tools-grid">{homeTools.map(([title, description, path, icon, color], index) => <Link to={path} className="home-tool-card" key={title}><ToolIcon name={icon} color={color} /><div><h3>{title}</h3><p>{description}</p></div>{[1, 4, 5, 6, 7, 8, 9, 10].includes(index) && <span className="new-badge">{comingSoonHomeTools.has(title) ? 'Coming soon' : 'NEW'}</span>}</Link>)}</div>
 
     <section className="home-section"><div className="section-title-line"><h2>Your social accounts</h2><Link to="/app/accounts">See all</Link></div><AccountCards accounts={accounts} /></section>
 

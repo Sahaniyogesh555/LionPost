@@ -18,10 +18,11 @@ export default function AccountCards({ accounts, onAdd }: { accounts: SocialAcco
   const navigate = useNavigate()
   return <div className="account-platform-grid">{platformDetails.map(({ platform, title, description }) => {
     const added = accounts.filter((account) => account.platform === platform).length
+    const comingSoon = platform !== 'Telegram'
     return <article className={`account-platform-card platform-card-${platform.toLowerCase()}`} key={platform}>
       <span className={`account-status ${added ? 'connected' : ''}`}>{added ? `● ${added} of 3 added` : 'Not added'}</span>
       <PlatformIcon platform={platform} size="lg" />
-      <div className="account-platform-copy"><h3>{title}</h3><p>{description}</p></div>
+      <div className="account-platform-copy"><h3>{title} {comingSoon && <span className="new-badge">Coming soon</span>}</h3><p>{description}</p></div>
       <Button size="sm" onClick={() => onAdd ? onAdd(platform) : navigate('/app/accounts')}>{added ? 'Open' : 'Add'} {added ? <ArrowRight size={14} /> : <Plus size={14} />}</Button>
     </article>
   })}</div>
