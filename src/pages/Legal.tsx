@@ -67,22 +67,26 @@ export function PrivacyPolicy() {
       <p>We do not sell personal information or use your private workspace content for advertising profiles. LionPost does not display third-party website advertisements.</p>
     </LegalSection>
 
-    <LegalSection id="google-data" title="4. Google user data and Blogger">
+    <LegalSection id="google-data" title="4. Google user data, Blogger and YouTube">
       <p>When you choose <strong>Connect Blogger</strong>, LionPost requests Google authorization for <code>openid</code>, <code>email</code> and <code>https://www.googleapis.com/auth/blogger</code>. The Blogger permission allows LionPost to discover your available Blogger blogs and publish articles through your selected connection.</p>
+      <p>When you separately choose <strong>Connect YouTube</strong>, LionPost uses a dedicated YouTube OAuth client and requests <code>https://www.googleapis.com/auth/youtube.readonly</code> and <code>https://www.googleapis.com/auth/youtube.upload</code>. These permissions allow channel discovery and the video uploads you direct. YouTube authorization is not combined with Blogger authorization.</p>
       <ul>
-        <li>We use your Google email and basic connection metadata to identify the connection in your workspace.</li>
-        <li>We use Blogger blog IDs, names and URLs to let you select a blog and to show its connection status.</li>
-        <li>We use Google authorization codes and tokens only to establish the connection, refresh access and perform the Blogger actions you request.</li>
-        <li>Your offline Google refresh token is encrypted with AES-256-GCM before it is stored in our Supabase database. Google access tokens are used for authorized API requests and are not returned to your browser.</li>
+        <li>We use your Google email, channel metadata and basic connection metadata to identify the relevant connection in your workspace.</li>
+        <li>We use Blogger blog IDs, names and URLs to let you select a blog, and YouTube channel IDs, names and handles to identify an upload destination.</li>
+        <li>We use Google authorization codes and tokens only to establish the selected connection, refresh access and perform the Blogger or YouTube actions you request.</li>
+        <li>Your offline Google refresh tokens are encrypted with AES-256-GCM before they are stored in our Supabase database. Google access tokens are used for authorized API requests and are not returned to your browser.</li>
       </ul>
-      <p>We do not sell Google user data, use it for advertising, use it to train AI models or use it for purposes unrelated to the Blogger connection and publishing features you request. We do not share it with unrelated third parties.</p>
+      <p>We do not sell Google user data, use it for advertising, use it to train AI models or use it for purposes unrelated to the Google connection and publishing features you request. We do not share it with unrelated third parties.</p>
       <p>LionPost’s use and transfer to any other app of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noreferrer">Google API Services User Data Policy, including the Limited Use requirements</a>.</p>
     </LegalSection>
 
-    <LegalSection id="ai-providers" title="5. Gemini, Telegram and other providers">
+    <LegalSection id="ai-providers" title="5. Gemini, social platforms and other providers">
       <ul>
         <li><strong>Gemini:</strong> you provide your own Gemini API key. The raw key is kept in browser session storage and is not saved in the LionPost cloud database. Requests go directly from your browser to Google. Prompts and generated content may be saved in your workspace when you choose to save them.</li>
         <li><strong>Telegram:</strong> when you connect a bot and chat, LionPost validates the connection, encrypts the bot token and sends content to Telegram only for the connection and publishing actions you request.</li>
+        <li><strong>Meta, X, TikTok and Pinterest:</strong> when you choose a connection, the provider returns account/profile data and authorization credentials that LionPost uses for account discovery and your requested publishing. Encryptable offline credentials are stored only in the server-side credential table.</li>
+        <li><strong>Dailymotion:</strong> you supply a private API key and secret so LionPost can validate access, discover manageable profiles and upload videos. Both values are encrypted before storage and are not saved in browser storage.</li>
+        <li><strong>Temporary publishing media:</strong> uploads are kept in a private owner-scoped bucket while needed for a publishing attempt. Depending on the provider, media is transferred as bytes, Base64 or a temporary signed URL. TikTok photo publishing requires a signed LionPost URL that TikTok can fetch; anyone with that unguessable URL can read the image until it expires or the temporary object is removed.</li>
         <li><strong>Public discovery sources:</strong> when you request a website, feed, sitemap or trend lookup, the relevant source provider receives the request needed to return that public content.</li>
       </ul>
       <p>Your use of a third-party provider is also subject to that provider’s terms and privacy policy.</p>
@@ -100,6 +104,7 @@ export function PrivacyPolicy() {
 
     <LegalSection id="retention" title="7. Retention and deletion">
       <p>Account and workspace records are retained while your account is active and until you delete the relevant content or your account. Encrypted connection credentials are retained while the connection is active and are deleted when you disconnect that account or delete your LionPost account.</p>
+      <p>Temporary publishing uploads are removed on a best-effort basis after the selected publishing attempts finish. Signed media URLs expire automatically; saved drafts, post images and publishing history remain subject to the workspace retention described above.</p>
       <p>Deleting a LionPost connection or account does not delete content already published on Blogger, Telegram or another third-party platform. You can manage that published content through the destination platform. Provider backups and security logs may take additional time to expire under the provider’s retention practices.</p>
     </LegalSection>
 

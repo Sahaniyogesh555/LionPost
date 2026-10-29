@@ -20,5 +20,5 @@ export const tools: ToolDefinition[] = [
   { name: 'Website to social', description: 'Send every new article to your social channels.', path: '/app/website', icon: 'website', color: 'green' },
   { name: 'Telegram channel auto post', description: 'Keep your channel useful, active and consistent.', path: '/app/auto-post', icon: 'telegram', color: 'blue' },
   { name: 'TikTok auto post', description: 'Turn long videos into clips and post them to TikTok.', path: '/app/bee-tiktok', icon: 'tiktok', color: 'black', badge: 'Coming soon' },
-  { name: 'YouTube and Dailymotion', description: 'Share your videos to more places automatically.', path: '/app/accounts', icon: 'youtube', color: 'red', badge: 'Coming soon' },
+  { name: 'YouTube and Dailymotion', description: 'Connect your channels and upload videos with per-provider visibility controls.', path: '/app/accounts', icon: 'youtube', color: 'red', badge: 'NEW' },
 ]

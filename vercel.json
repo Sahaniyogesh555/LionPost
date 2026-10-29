@@ -1,5 +1,11 @@
 {
   "rewrites": [
+    { "source": "/api/providers/media/:action", "destination": "/api/providers?provider=media&action=:action" },
+    { "source": "/api/facebook/:action", "destination": "/api/providers?provider=facebook&action=:action" },
+    { "source": "/api/tiktok/:action", "destination": "/api/providers?provider=tiktok&action=:action" },
+    { "source": "/api/youtube/:action", "destination": "/api/providers?provider=youtube&action=:action" },
+    { "source": "/api/pinterest/:action", "destination": "/api/providers?provider=pinterest&action=:action" },
+    { "source": "/api/dailymotion/:action", "destination": "/api/providers?provider=dailymotion&action=:action" },
     { "source": "/api/instagram/:action", "destination": "/api/instagram?action=:action" },
     { "source": "/api/x/:action", "destination": "/api/x?action=:action" },
     { "source": "/(.*)", "destination": "/index.html" }

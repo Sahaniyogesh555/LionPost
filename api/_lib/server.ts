@@ -20,6 +20,7 @@ export interface ApiRequest {
 export interface ApiResponse {
   status: (code: number) => ApiResponse
   json: (body: unknown) => void
+  end: (body?: string | Buffer) => void
   setHeader: (name: string, value: string) => void
 }
 

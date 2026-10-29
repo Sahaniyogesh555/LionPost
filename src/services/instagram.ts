@@ -15,7 +15,7 @@ export function beginInstagramConnection(accessToken: string) {
   return request<{ url: string; redirectUri: string }>('/api/instagram/connect', accessToken)
 }
 
-export function publishToInstagram(accessToken: string, input: { accountIds: string[]; text: string; mediaPath: string; mediaType: 'image' | 'video' }) {
+export function publishToInstagram(accessToken: string, input: { accountIds: string[]; text: string; mediaPath: string; mediaType: 'image' | 'video'; cleanupMedia?: boolean }) {
   return request<{ results: PublishResult[] }>('/api/instagram/publish', accessToken, input).then((response) => response.results)
 }
 

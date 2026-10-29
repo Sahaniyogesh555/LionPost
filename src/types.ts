@@ -2,6 +2,9 @@ export type Platform = 'Facebook' | 'Instagram' | 'X' | 'Pinterest' | 'Telegram'
 
 export type PostStatus = 'sent' | 'scheduled' | 'failed' | 'draft'
 
+export type ConnectionType = 'local' | 'telegram' | 'blogger' | 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'pinterest' | 'dailymotion'
+export type RemoteProvider = 'facebook' | 'tiktok' | 'youtube' | 'pinterest' | 'dailymotion'
+
 export interface PublishResult {
   accountId: string
   platform: Platform
@@ -32,7 +35,7 @@ export interface SocialAccount {
   name: string
   handle: string
   status: 'working' | 'paused'
-  connectionType?: 'local' | 'telegram' | 'blogger' | 'x' | 'instagram'
+  connectionType?: ConnectionType
   externalId?: string
   botUsername?: string
 }

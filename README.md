@@ -1,8 +1,10 @@
 # LionPost
 
-A responsive React implementation of the authentic LionPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and real social publishing.
+A responsive React implementation of the authentic LionPost designs supplied in the **LionPost Design** Google Drive folder. It includes the public marketing site, real account authentication, a cloud-synced creator workspace, live content discovery, Gemini drafting, and connected social publishing.
 
 **Production:** https://lionpost.vercel.app
+
+**Preserved classic site:** https://lionpost-classic.vercel.app
 
 ## Run locally
 
@@ -13,13 +15,13 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The Vite server listens on `0.0.0.0:5173` and provides local middleware for the feed, social OAuth/publishing, and account APIs. Generate a new 32-byte encryption key with:
+The Vite server listens on `0.0.0.0:5173` and provides local middleware for the feed, social OAuth/publishing, temporary media, and account APIs. Generate a new 32-byte encryption key with:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
 ```
 
-Never expose `SUPABASE_SERVICE_ROLE_KEY` or `TOKEN_ENCRYPTION_KEY` through a `VITE_` variable. The publishable Supabase key is the only Supabase credential intended for the browser.
+Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TOKEN_ENCRYPTION_KEY`, OAuth client secrets, or Dailymotion private API secrets through a `VITE_` variable. The publishable Supabase key is the only Supabase credential intended for the browser.
 
 ## Production build
 
@@ -32,46 +34,119 @@ npm run preview
 
 - **Email authentication:** Supabase email signup, confirmation, login, password recovery/reset, verified password changes, and password-confirmed account deletion.
 - **Cloud workspace:** Posts, social accounts, automations, notifications, and profile data are isolated by owner RLS policies. Existing browser work is migrated on first login; private browser state is cleared on logout.
-- **Telegram:** Connect a BotFather bot to a channel or group. The server validates the bot/chat and posting permission, encrypts the token with AES-256-GCM, and publishes text or uploaded images through the Bot API. Per-account results and errors appear in Post history.
-- **Blogger:** Signed Google OAuth, offline refresh-token encryption, blog discovery, Gemini article drafts, and real Blogger API publishing with labels and live article links. Manual blog names/URLs are never treated as Google connections.
-- **X:** OAuth 2.0 + PKCE, encrypted refresh-token handling, account discovery, disconnect, and real text publishing with per-account results.
-- **Instagram:** Meta's recommended Instagram API with Unified Login, signed OAuth state, encrypted Business Integration System User tokens, professional-account discovery, JPEG photo and MP4/MOV Reel publishing, media-container processing, permalinks, and disconnect. Private Supabase uploads are shared with Meta only through short-lived signed URLs and removed after the publishing attempt.
+- **Telegram:** Validated BotFather bot/chat connections, encrypted tokens, and text/image publishing.
+- **Blogger:** Signed Google OAuth, encrypted offline tokens, blog discovery, Gemini article drafts, labels, and real Blogger API publishing.
+- **X:** OAuth 2.0 + PKCE, encrypted refresh-token handling, account discovery, disconnect, and real text publishing. X is user-confirmed working; media is not currently supported.
+- **Instagram:** Instagram API with Unified Login, professional-account discovery, encrypted Business Integration System User tokens, JPEG photos, MP4/MOV Reels, container processing, and permalinks.
+- **Facebook Pages:** Facebook Login for Business, long-lived user/Page tokens, manageable-Page discovery, text posts, photos, and MP4 video upload through Meta's Resumable Upload API.
+- **TikTok:** Login Kit OAuth, encrypted refresh tokens, live creator privacy options, Direct Post status polling, chunked MP4/MOV video upload, and photo posts through a signed LionPost media URL.
+- **YouTube:** A dedicated Google OAuth client, encrypted refresh tokens, channel discovery, resumable video upload, visibility controls, and the creator's made-for-kids declaration.
+- **Pinterest:** OAuth with encrypted refresh tokens, live board selection, and image Pin creation using a private upload converted to JPEG and sent as Base64.
+- **Dailymotion:** API v2 private-key validation, encrypted user-supplied key/secret storage, manageable-profile discovery, upload sessions, visibility/category metadata, and made-for-kids declarations.
 - **Content discovery:** Live Google Trends, RSS/Atom feeds, sitemaps, website previews, seen-item tracking, and duplicate prevention.
 - **Gemini:** User-supplied API keys, model discovery/validation, and real text drafting. Raw keys remain session-only and go directly from the browser to Google.
 - **Creation tools:** Branding, Pin Maker with real PNG export, video previews/history, automations, Blogger setup, notifications, dark mode, and responsive mobile layouts.
 
-Drafts and scheduled records are saved to the cloud, but **background scheduled publishing is not enabled yet**. Unsupported social profiles are explicitly marked as draft-only until their real OAuth/publishing integrations exist. Full server-side video rendering and other social OAuth are separate future work. Blogger, X, and Instagram require their provider credentials before users can connect.
+Every immediate publish saves an individual result or provider error for each selected account. Drafts and scheduled records are saved to the cloud, but **background scheduled publishing is not enabled yet**. First comments, Telegram video, X media, and Pinterest video Pins are not currently enabled; the composer rejects unsupported combinations instead of reporting false success.
+
+> **Implementation is not activation.** New provider code does not include any provider credentials. Apart from the previously confirmed X workflow, each new OAuth connection and real publish must still be tested after the user adds credentials and completes provider-specific setup. Instagram OAuth/photo/Reel testing also remains necessary.
 
 ## Blogger OAuth activation
 
-The Blogger workflow is implemented, but Google does not allow publishing without an OAuth Web client. To activate it:
-
 1. In Google Cloud, enable **Blogger API v3** and configure the OAuth consent screen.
 2. Create an OAuth client of type **Web application**.
-3. Add this authorized redirect URI: `https://lionpost.vercel.app/api/blogger/callback`. For local development, also add `http://localhost:5173/api/blogger/callback`.
-4. Set `APP_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` in the server environment. Keep the client secret sensitive and never expose it with a `VITE_` variable.
-5. If the Google consent app is in testing mode, add each connecting Google account as a test user. Google verification requirements can apply to public apps using Blogger scopes.
+3. Add `https://lionpost.vercel.app/api/blogger/callback`. For local development, also add `http://localhost:5173/api/blogger/callback`.
+4. Set `APP_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` in the server environment.
+5. If the consent app is in testing mode, add each connecting Google account as a test user.
 
-Until those credentials are configured, **Connect Blogger** returns an explicit setup error rather than creating a fake connection.
+Do not add YouTube scopes to this Blogger client. Blogger brand verification and YouTube activation are intentionally separate.
 
 ## Instagram Unified Login activation
 
-1. Create a business-portfolio-owned Meta app with **Manage messaging & content on Instagram** and an Instagram-compatible Facebook Login for Business configuration. Request `instagram_basic` and `instagram_content_publish`; retain any permissions Meta marks as required, but do not add ads, comments, insights, or other unused access.
-2. Register `https://lionpost.vercel.app/api/instagram/callback` in the Unified Login configuration. For local development, register `http://localhost:5173/api/instagram/callback` separately and use a local configuration if Meta requires it.
-3. Set `APP_URL`, `META_APP_ID`, `META_APP_SECRET`, `META_INSTAGRAM_CONFIG_ID`, and optionally `META_GRAPH_API_VERSION` (default `v26.0`) in the server environment. The App Secret must remain sensitive and must never use a `VITE_` variable.
-4. Apply the Supabase migrations. They allow Instagram account records and create the private `post-media` bucket with owner-only RLS policies.
-5. While the Meta app is in Development mode, add the Instagram professional account as an Instagram Tester and accept its invitation. The account must belong to the business portfolio selected during login. Public client connections require Advanced Access through Meta App Review and Live mode.
+1. Create a business-portfolio-owned Meta app with **Manage messaging & content on Instagram** and an Instagram-compatible Facebook Login for Business configuration. Request `instagram_basic` and `instagram_content_publish`; retain permissions Meta marks as required, but do not add unused access.
+2. Register `https://lionpost.vercel.app/api/instagram/callback` in the Unified Login configuration.
+3. Set `META_APP_ID`, `META_APP_SECRET`, `META_INSTAGRAM_CONFIG_ID`, and optionally `META_GRAPH_API_VERSION` (default `v26.0`).
+4. Apply the Supabase migrations. They create the private `post-media` bucket with owner-only RLS policies.
+5. In Development mode, add the Instagram professional account as an Instagram Tester and accept its invitation. The account must belong to the selected business portfolio. Public client connections require the relevant Advanced Access/App Review and Live mode.
 
-Until those credentials are configured, **Connect Instagram** returns an explicit setup error rather than creating a fake connection. Successful OAuth alone does not prove publishing works; verify a real photo or Reel before treating the integration as live.
+Successful OAuth alone does not prove publishing works; verify a real photo and Reel before treating the integration as live.
 
-## Data protection
+## Facebook Pages activation
+
+Facebook Pages use a **separate Facebook Login for Business configuration**, not the Instagram configuration.
+
+1. Add Facebook Login for Business to the Meta app and create a Page-publishing configuration requesting the Page permissions in `api/_lib/facebook.ts`: `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `pages_manage_engagement`, `pages_read_user_engagement`, and `publish_video`.
+2. Register `https://lionpost.vercel.app/api/facebook/callback` in that configuration.
+3. Set `META_APP_ID`, `META_APP_SECRET`, and `META_FACEBOOK_CONFIG_ID`. The existing Meta app ID/secret can be shared with Instagram, but the two configuration IDs remain distinct.
+4. Add the Pages to the selected business portfolio. The connecting person must be allowed to create content on each Page. LionPost discovers `/me/accounts` and, when needed, business-assigned Pages; it stores a Page token only after Meta returns one.
+5. Development-mode roles and Meta App Review/Advanced Access rules still apply. A normal personal Facebook profile is not a publishing destination; this integration publishes to Pages.
+
+Facebook text and photo posts use the Pages API. Video uploads require MP4 and use a user-token resumable upload followed by a Page-token video publish.
+
+## TikTok activation
+
+1. Create a TikTok developer app with **Login Kit** and **Content Posting API / Direct Post**. Request `user.info.basic` and `video.publish`.
+2. Register `https://lionpost.vercel.app/api/tiktok/callback` as a Login Kit redirect URI.
+3. Set `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET`. Keep `TIKTOK_PUBLIC_POSTING=false` initially.
+4. Before every post, LionPost queries TikTok's creator-info endpoint and displays the currently allowed privacy choices. The server validates the choice again before publishing.
+5. **Videos:** MP4/MOV bytes are uploaded directly to TikTok in chunks; no media-domain verification is needed for this transfer mode.
+6. **Photos:** TikTok permits `PULL_FROM_URL` only for photo posts. Verify `https://lionpost.vercel.app` or the narrower `https://lionpost.vercel.app/api/tiktok/media` URL prefix in the TikTok app's URL properties, as applicable. LionPost then serves the owner's private image through a two-hour HMAC-signed URL. Without TikTok URL verification, video publishing can work while photo publishing correctly fails.
+7. Unaudited TikTok clients are restricted by TikTok, including private-only posting and test-user limits. After a successful audit, set `TIKTOK_PUBLIC_POSTING=true` to expose the creator's non-private options. This variable cannot bypass TikTok's own enforcement.
+
+## YouTube activation
+
+YouTube is deliberately isolated from Blogger OAuth and Blogger branding.
+
+1. Use a dedicated Google Cloud project or a dedicated Web OAuth client and enable **YouTube Data API v3**.
+2. Add `https://lionpost.vercel.app/api/youtube/callback` as its authorized redirect URI.
+3. Set `YOUTUBE_CLIENT_ID` and `YOUTUBE_CLIENT_SECRET`; do not substitute `GOOGLE_CLIENT_ID` or reuse the Blogger client.
+4. The YouTube flow requests only `youtube.readonly` and `youtube.upload`, with offline access and incremental grants disabled. The connecting Google account must have a manageable YouTube channel.
+5. Complete any Google verification/testing and quota requirements that apply to this separate YouTube app. No change to the Blogger brand-verification flow is required by this codebase.
+
+The composer supports private, unlisted, or public uploads and sends the creator's made-for-kids declaration. YouTube processing can continue after a video ID is returned.
+
+## Pinterest activation
+
+1. Create a Pinterest developer app and register `https://lionpost.vercel.app/api/pinterest/callback` exactly as its redirect URI.
+2. Request `user_accounts:read`, `boards:read`, `boards:write`, `pins:read`, and `pins:write`.
+3. Set `PINTEREST_CLIENT_ID` and `PINTEREST_CLIENT_SECRET`.
+4. Complete any Pinterest app access/review requirements. The connecting account must have at least one board; boards are loaded live in the composer.
+
+This integration creates **image Pins**. Photos remain in private Supabase storage until the server reads them for the Pinterest Base64 request, then the temporary object is removed.
+
+## Dailymotion API v2 activation
+
+Dailymotion's current API v2 uses a private API key and client-credentials token, not a browser OAuth redirect.
+
+1. In Dailymotion Studio, open **Settings → Account → API keys → Create API key** and choose **Private API key**.
+2. Apply it to the intended profiles and enable `account.read`, `profile.read`, and `video.manage`. Save the secret immediately; Dailymotion shows it only once.
+3. In LionPost **Accounts → Dailymotion**, enter the key and secret. LionPost validates them, calls `/v2/me`, discovers manageable profiles, and encrypts both values before storage. They are never written to browser storage.
+4. Optionally set `DAILYMOTION_CATEGORY` on the server (default `entertainment`). No Dailymotion client secret needs to be added to Vercel.
+
+Videos use Dailymotion upload sessions rather than external-source URLs, so the separate external-URL source entitlement is not required. Encoding can continue after the video record is created.
+
+## Media and credential protection
 
 - Six normalized Supabase tables use per-user ownership and cascading deletion.
 - Browser roles cannot read or write the `social_connections` credential table.
-- Social provider tokens are encrypted with AES-256-GCM, never written to browser storage, and never returned by an API.
-- Instagram media remains in a private owner-scoped bucket; publishing uses temporary signed URLs rather than a public bucket.
+- OAuth tokens and Dailymotion private credentials are encrypted with AES-256-GCM, never returned by an API, and deleted on disconnect.
+- Publishing media uses the private `post-media` bucket with owner-scoped paths and policies. Images are converted to JPEG; MP4/MOV videos are limited to 100 MB.
+- Meta receives short-lived signed Supabase URLs when its API needs to fetch media. TikTok video, YouTube, Pinterest, and Dailymotion use server-side byte transfers. TikTok photos alone use a signed, expiring LionPost capability URL because TikTok requires a verified public photo URL.
+- When several providers share one upload, the composer defers deletion until every selected provider finishes, then calls the authenticated cleanup endpoint. Cleanup is best effort and never rewrites an already-determined provider result.
 - Account deletion verifies the current password and removes the Auth user and all owned cloud records.
-- No website advertisements or fixed demo content are included.
+
+## Serverless routing
+
+`api/providers.ts` consolidates Facebook, TikTok, YouTube, Pinterest, Dailymotion, and temporary-media operations into **one** Vercel function. Explicit `vercel.json` rewrites preserve provider-specific URLs. Together with the existing routes this keeps the deployment at the Hobby plan's **12-function maximum**; do not split these providers into additional function files without changing the hosting plan.
+
+Production callbacks:
+
+- `https://lionpost.vercel.app/api/facebook/callback`
+- `https://lionpost.vercel.app/api/tiktok/callback`
+- `https://lionpost.vercel.app/api/youtube/callback`
+- `https://lionpost.vercel.app/api/pinterest/callback`
+
+Dailymotion has no callback. Existing Instagram, X, and Blogger callbacks remain unchanged.
 
 ## Integration test
 
@@ -79,14 +154,14 @@ Until those credentials are configured, **Connect Instagram** returns an explici
 npm run test:integration
 ```
 
-The test requires the server environment and outbound Supabase access. It creates two temporary confirmed users, checks real Auth/RLS/cloud behavior, uses mocked Telegram and Google OAuth/Blogger APIs for deterministic success/partial-failure/photo/article flows, verifies encryption and cascades, and deletes the temporary users in `finally`. It does not need or use a real Telegram bot or Google OAuth client.
+The existing integration test requires the server environment and outbound Supabase access. It creates temporary confirmed users, checks real Auth/RLS/cloud behavior, and uses mocked Telegram and Google OAuth/Blogger APIs for deterministic success/partial-failure/photo/article flows. It does not prove live provider activation. Real OAuth and publishing checks for Instagram and the newly added providers require the user's apps, credentials, test accounts, and provider approvals.
 
 ## Stack
 
 - React 19 + TypeScript + React Router
 - Vite + Vercel Node functions
-- Supabase Auth, Postgres, and row-level security
-- Telegram Bot API + AES-256-GCM credential encryption
+- Supabase Auth, Postgres, Storage, and row-level security
+- Official provider APIs + AES-256-GCM credential encryption
 - Gemini API, RSS/Atom, sitemaps, and Google Trends
 - Lucide icons, self-hosted Nunito, and custom responsive CSS
 
@@ -96,7 +171,7 @@ The test requires the server environment and outbound Supabase access. It create
 - `/login`, `/signup`, `/reset-password` — authentication
 - `/privacy`, `/terms` — public privacy policy and terms of service
 - `/app` — protected dashboard
-- `/app/new-post` — composer and connected Instagram, Telegram, and X publishing
-- `/app/posts` — post history and publish results
-- `/app/accounts` — real social connections and draft profiles
+- `/app/new-post` — composer and connected publishing
+- `/app/posts` — post history and per-account publish results
+- `/app/accounts` — provider connections
 - `/app/auto-post` — automation hub

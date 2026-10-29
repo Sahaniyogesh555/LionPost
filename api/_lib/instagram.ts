@@ -292,10 +292,12 @@ export async function publishInstagram(request: ApiRequest) {
     const results = await Promise.all((accounts || []).map((account) => publishToAccount(user.id, account, caption, mediaType, signed.signedUrl)))
     return { results }
   } finally {
-    // Meta has fetched or rejected the media by this point. Do not leave
-    // temporary publishing uploads in storage after the attempt finishes.
-    // Cleanup must never turn an already-published result into a failed request.
-    try { await server.storage.from(MEDIA_BUCKET).remove([mediaPath]) } catch { /* Best-effort temporary media cleanup. */ }
+    // Meta has fetched or rejected the media by this point. The composer can
+    // defer cleanup when the same private upload is also being sent to other
+    // providers; direct API callers retain the default immediate cleanup.
+    if (input.cleanupMedia !== false) {
+      try { await server.storage.from(MEDIA_BUCKET).remove([mediaPath]) } catch { /* Best-effort temporary media cleanup. */ }
+    }
   }
 }
 

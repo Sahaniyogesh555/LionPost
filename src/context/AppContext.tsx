@@ -1,12 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocalStorage, makeId } from '../hooks/useLocalStorage'
-import type { AppNotification, Automation, Post, SocialAccount, ToastMessage, UserProfile } from '../types'
+import type { AppNotification, Automation, Post, RemoteProvider, SocialAccount, ToastMessage, UserProfile } from '../types'
 import { useAuth } from './AuthContext'
 import { cloud, loadWorkspace, saveWorkspace, type CloudWorkspace } from '../services/cloud'
 import { disconnectTelegramAccount } from '../services/telegram'
 import { disconnectBloggerAccount } from '../services/blogger'
 import { disconnectXAccount } from '../services/x'
 import { disconnectInstagramAccount } from '../services/instagram'
+import { disconnectProviderAccount } from '../services/providers'
+import { isConnectedAccount } from '../utils'
 
 const defaultProfile: UserProfile = { name: '', email: '', about: '', website: '', phone: '', country: '' }
 const OWNER_KEY = 'lionpost-workspace-owner'
@@ -261,12 +263,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     removeAccount: async (id) => {
       const account = accounts.find((item) => item.id === id)
       if (!account) return false
-      if (account.connectionType === 'telegram' || account.connectionType === 'blogger' || account.connectionType === 'x' || account.connectionType === 'instagram') {
+      if (isConnectedAccount(account)) {
         const saved = await runCloud(async (userId, accessToken) => {
           if (account.connectionType === 'telegram') await disconnectTelegramAccount(accessToken, id)
           else if (account.connectionType === 'blogger') await disconnectBloggerAccount(accessToken, id)
           else if (account.connectionType === 'x') await disconnectXAccount(accessToken, id)
-          else await disconnectInstagramAccount(accessToken, id)
+          else if (account.connectionType === 'instagram') await disconnectInstagramAccount(accessToken, id)
+          else if (['facebook', 'tiktok', 'youtube', 'pinterest', 'dailymotion'].includes(account.connectionType || '')) await disconnectProviderAccount(account.connectionType as RemoteProvider, accessToken, id)
           await cloud.deleteAccount(userId, id)
         })
         if (!saved) {

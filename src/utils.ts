@@ -1,3 +1,9 @@
+import type { SocialAccount } from './types'
+
+export function isConnectedAccount(account: SocialAccount) {
+  return Boolean(account.connectionType && account.connectionType !== 'local')
+}
+
 export function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

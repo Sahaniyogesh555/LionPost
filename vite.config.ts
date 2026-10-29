@@ -11,6 +11,7 @@ interface ApiRequest {
 interface ApiResponse {
   status: (code: number) => ApiResponse
   json: (body: unknown) => void
+  end: (body?: string | Buffer) => void
   setHeader: (name: string, value: string) => void
 }
 
@@ -36,6 +37,9 @@ function nodeResponse(response: ServerResponse): ApiResponse {
     json(body) {
       response.setHeader('Content-Type', 'application/json; charset=utf-8')
       response.end(JSON.stringify(body))
+    },
+    end(body) {
+      response.end(body)
     },
     setHeader(name, value) {
       response.setHeader(name, value)
@@ -170,6 +174,34 @@ function localApi(): Plugin {
         apiRequest.body = await readJson(request)
         await respond(apiRequest, nodeResponse(response), () => x[methods[action]](apiRequest))
       })
+
+      server.middlewares.use('/api/providers/media', async (request, response) => {
+        const url = new URL(request.url || '/', 'http://localhost')
+        const action = url.pathname.replace(/^\/+|\/+$/g, '')
+        const providers = await server.ssrLoadModule('/api/providers.ts')
+        const apiRequest: ApiRequest = {
+          method: request.method,
+          query: { ...Object.fromEntries(url.searchParams), provider: 'media', action },
+          headers: request.headers,
+          body: request.method === 'POST' ? await readJson(request) : undefined,
+        }
+        await providers.default(apiRequest, nodeResponse(response))
+      })
+
+      for (const provider of ['facebook', 'tiktok', 'youtube', 'pinterest', 'dailymotion']) {
+        server.middlewares.use(`/api/${provider}`, async (request, response) => {
+          const url = new URL(request.url || '/', 'http://localhost')
+          const action = url.pathname.replace(/^\/+|\/+$/g, '')
+          const providers = await server.ssrLoadModule('/api/providers.ts')
+          const apiRequest: ApiRequest = {
+            method: request.method,
+            query: { ...Object.fromEntries(url.searchParams), provider, action },
+            headers: request.headers,
+            body: request.method === 'POST' ? await readJson(request) : undefined,
+          }
+          await providers.default(apiRequest, nodeResponse(response))
+        })
+      }
 
       server.middlewares.use('/api/account/delete', async (request, response) => {
         if (request.method !== 'POST') {
