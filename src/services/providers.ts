@@ -8,6 +8,7 @@ export interface ProviderPublishInput {
   mediaPath?: string
   mediaType?: 'image' | 'video'
   cleanupMedia?: boolean
+  tiktokPostMode?: 'DIRECT_POST' | 'MEDIA_UPLOAD'
   privacyLevel?: string
   tiktokAllowComment?: boolean
   tiktokAllowDuet?: boolean

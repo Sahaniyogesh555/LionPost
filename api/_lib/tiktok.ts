@@ -6,6 +6,7 @@ import type { PublishResult } from '../../src/types.js'
 const API = 'https://open.tiktokapis.com'
 const MAX_CHUNK_BYTES = 64 * 1024 * 1024
 const LARGE_FILE_CHUNK_BYTES = 10 * 1024 * 1024
+const MAX_INBOX_VIDEO_SECONDS = 10 * 60
 
 interface TikTokToken {
   access_token?: string
@@ -101,7 +102,7 @@ export async function beginTikTok(request: ApiRequest) {
   const parameters = new URLSearchParams({
     client_key: config.clientKey,
     response_type: 'code',
-    scope: 'user.info.basic,video.publish',
+    scope: 'user.info.basic,video.publish,video.upload',
     redirect_uri: config.redirectUri,
     state: createOAuthState('tiktok', user.id),
   })
@@ -119,7 +120,7 @@ export async function completeTikTok(request: ApiRequest) {
     const config = tiktokConfig()
     const token = await tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: config.redirectUri })
     const scopes = new Set((token.scope || '').split(/[\s,]+/).filter(Boolean))
-    if (!scopes.has('user.info.basic') || !scopes.has('video.publish')) throw new ApiError(400, 'TikTok did not grant both profile and Direct Post permissions. Reconnect and approve all requested permissions.')
+    if (!scopes.has('user.info.basic') || !scopes.has('video.publish') || !scopes.has('video.upload')) throw new ApiError(400, 'TikTok did not grant profile, Direct Post, and inbox-draft permissions. Reconnect and approve all requested permissions.')
     const profile = await bearerRequest<{ open_id?: string; display_name?: string; avatar_url?: string }>('/v2/user/info/?fields=open_id,display_name,avatar_url', String(token.access_token || ''))
     const externalId = String(profile.open_id || token.open_id || '')
     const displayName = String(profile.display_name || 'TikTok creator')
@@ -250,10 +251,18 @@ export function readMp4DurationSeconds(buffer: Buffer) {
   return Number.isFinite(seconds) && seconds > 0 ? seconds : 0
 }
 
-async function uploadVideo(uploadUrl: string, buffer: Buffer, contentType: string) {
-  const chunkSize = buffer.length > MAX_CHUNK_BYTES ? LARGE_FILE_CHUNK_BYTES : buffer.length
-  for (let offset = 0; offset < buffer.length; offset += chunkSize) {
-    const end = Math.min(buffer.length, offset + chunkSize)
+export function tiktokVideoUploadLayout(videoSize: number) {
+  if (!Number.isSafeInteger(videoSize) || videoSize <= 0) throw new ApiError(400, 'The TikTok video is empty or has an invalid size.')
+  if (videoSize <= MAX_CHUNK_BYTES) return { chunkSize: videoSize, totalChunkCount: 1 }
+  // TikTok's chunk count is floor(video_size / chunk_size). The final chunk
+  // contains the remaining bytes and may therefore be larger than chunk_size.
+  return { chunkSize: LARGE_FILE_CHUNK_BYTES, totalChunkCount: Math.floor(videoSize / LARGE_FILE_CHUNK_BYTES) }
+}
+
+async function uploadVideo(uploadUrl: string, buffer: Buffer, contentType: string, layout: { chunkSize: number; totalChunkCount: number }) {
+  for (let index = 0; index < layout.totalChunkCount; index += 1) {
+    const offset = index * layout.chunkSize
+    const end = index === layout.totalChunkCount - 1 ? buffer.length : offset + layout.chunkSize
     const chunk = buffer.subarray(offset, end)
     const response = await providerFetch('TikTok upload', uploadUrl, {
       method: 'PUT',
@@ -262,7 +271,6 @@ async function uploadVideo(uploadUrl: string, buffer: Buffer, contentType: strin
     }, 180_000)
     await response.arrayBuffer()
   }
-  return chunkSize
 }
 
 async function waitForPublish(publishId: string, accessToken: string, handle: string, mediaType: 'image' | 'video'): Promise<{ externalId: string; url?: string; warning?: string }> {
@@ -290,6 +298,7 @@ export async function publishTikTok(request: ApiRequest) {
   const ids = accountIds(input, 1)
   const text = String(input.text || '').trim()
   const mediaType = String(input.mediaType || '')
+  const postMode = String(input.tiktokPostMode || 'DIRECT_POST')
   const privacyLevel = String(input.privacyLevel || '')
   const allowComment = input.tiktokAllowComment === true
   const allowDuet = input.tiktokAllowDuet === true
@@ -299,17 +308,58 @@ export async function publishTikTok(request: ApiRequest) {
   const brandedContent = commercial && input.tiktokBrandedContent === true
   if (ids.length !== 1) throw new ApiError(400, 'Publish to one TikTok account at a time.')
   if (!['image', 'video'].includes(mediaType)) throw new ApiError(400, 'TikTok publishing requires a photo or video.')
-  if (!privacyLevel) throw new ApiError(400, 'Choose a TikTok privacy level from the current creator options.')
-  if (mediaType === 'image' && (allowDuet || allowStitch)) throw new ApiError(400, 'TikTok photo posts support Allow Comment only; Duet and Stitch are unavailable.')
-  if (!commercial && (input.tiktokYourBrand === true || input.tiktokBrandedContent === true)) throw new ApiError(400, 'Turn on TikTok commercial content disclosure before choosing a disclosure type.')
-  if (commercial && !yourBrand && !brandedContent) throw new ApiError(400, 'You need to indicate if your content promotes yourself, a third party, or both.')
-  if (brandedContent && privacyLevel === 'SELF_ONLY') throw new ApiError(400, 'Branded content visibility cannot be set to private.')
+  if (!['DIRECT_POST', 'MEDIA_UPLOAD'].includes(postMode)) throw new ApiError(400, 'Choose Direct Post or TikTok inbox draft.')
+  if (postMode === 'DIRECT_POST') {
+    if (!privacyLevel) throw new ApiError(400, 'Choose a TikTok privacy level from the current creator options.')
+    if (mediaType === 'image' && (allowDuet || allowStitch)) throw new ApiError(400, 'TikTok photo posts support Allow Comment only; Duet and Stitch are unavailable.')
+    if (!commercial && (input.tiktokYourBrand === true || input.tiktokBrandedContent === true)) throw new ApiError(400, 'Turn on TikTok commercial content disclosure before choosing a disclosure type.')
+    if (commercial && !yourBrand && !brandedContent) throw new ApiError(400, 'You need to indicate if your content promotes yourself, a third party, or both.')
+    if (brandedContent && privacyLevel === 'SELF_ONLY') throw new ApiError(400, 'Branded content visibility cannot be set to private.')
+  }
   if (Array.from(text).length > 4000) throw new ApiError(400, 'TikTok descriptions can contain at most 4,000 characters.')
   const { path } = validateMediaPath(user.id, input.mediaPath, mediaType)
   const [account] = await ownedAccounts(user.id, client, 'TikTok', 'tiktok', ids)
   const accountId = String(account.id)
 
   try {
+    if (postMode === 'MEDIA_UPLOAD') {
+      const accessToken = await accessTokenFor(user.id, accountId)
+      let publishId = ''
+      if (mediaType === 'video') {
+        const media = await readTemporaryMedia(user.id, path, 'video')
+        const durationSeconds = readMp4DurationSeconds(media.buffer)
+        if (!durationSeconds) throw new ApiError(400, 'TikTok video duration could not be verified. Re-encode the video as a standard MP4 or MOV file and try again.')
+        if (durationSeconds > MAX_INBOX_VIDEO_SECONDS + 0.001) throw new ApiError(400, `TikTok inbox drafts accept videos up to ${MAX_INBOX_VIDEO_SECONDS} seconds. This video is ${durationSeconds.toFixed(1)} seconds long.`)
+        const layout = tiktokVideoUploadLayout(media.buffer.length)
+        const initialized = await bearerRequest<{ publish_id?: string; upload_url?: string }>('/v2/post/publish/inbox/video/init/', accessToken, {
+          source_info: { source: 'FILE_UPLOAD', video_size: media.buffer.length, chunk_size: layout.chunkSize, total_chunk_count: layout.totalChunkCount },
+        })
+        if (!initialized.publish_id || !initialized.upload_url) throw new ApiError(400, 'TikTok did not return an inbox-draft upload session.')
+        publishId = initialized.publish_id
+        await uploadVideo(initialized.upload_url, media.buffer, media.contentType, layout)
+      } else {
+        const initialized = await bearerRequest<{ publish_id?: string }>('/v2/post/publish/content/init/', accessToken, {
+          post_info: { title: mediaTitle(text, 'Photo', 90), description: text },
+          source_info: { source: 'PULL_FROM_URL', photo_cover_index: 0, photo_images: [createTikTokMediaUrl(user.id, path)] },
+          post_mode: 'MEDIA_UPLOAD',
+          media_type: 'PHOTO',
+        })
+        if (!initialized.publish_id) throw new ApiError(400, 'TikTok did not return a photo draft ID. Verify the LionPost media URL/domain in TikTok URL properties and try again.')
+        publishId = initialized.publish_id
+      }
+      // For inbox uploads, PUBLISH_COMPLETE means the creator later finished
+      // posting inside TikTok. Do not misreport the initial upload as published.
+      const result: PublishResult = {
+        accountId,
+        platform: 'TikTok',
+        status: 'sent',
+        delivery: 'provider_draft',
+        externalId: publishId,
+        warning: 'TikTok received the draft upload. Open its inbox notification when it arrives to review, edit, and publish; this step did not post to the profile.',
+      }
+      return { results: [result] }
+    }
+
     const { accessToken, info } = await creatorInfo(user.id, accountId)
     const available = Array.isArray(info.privacy_level_options) ? info.privacy_level_options : []
     if (!available.includes(privacyLevel)) throw new ApiError(400, 'That TikTok privacy level is not currently available for this creator. Refresh the options and choose again.')
@@ -327,14 +377,14 @@ export async function publishTikTok(request: ApiRequest) {
       const maximumDuration = Number(info.max_video_post_duration_sec || 0)
       if (!maximumDuration) throw new ApiError(400, 'TikTok did not return this creator’s maximum video duration. Refresh the creator options before publishing.')
       if (durationSeconds > maximumDuration + 0.001) throw new ApiError(400, `This video is ${durationSeconds.toFixed(1)} seconds long, but this TikTok creator allows at most ${maximumDuration} seconds. Shorten the video before publishing.`)
-      const chunkSize = media.buffer.length > MAX_CHUNK_BYTES ? LARGE_FILE_CHUNK_BYTES : media.buffer.length
+      const layout = tiktokVideoUploadLayout(media.buffer.length)
       const initialized = await bearerRequest<{ publish_id?: string; upload_url?: string }>('/v2/post/publish/video/init/', accessToken, {
         post_info: { title: text, privacy_level: privacyLevel, disable_duet: !allowDuet, disable_comment: !allowComment, disable_stitch: !allowStitch, video_cover_timestamp_ms: 1000, ...disclosure },
-        source_info: { source: 'FILE_UPLOAD', video_size: media.buffer.length, chunk_size: chunkSize, total_chunk_count: Math.ceil(media.buffer.length / chunkSize) },
+        source_info: { source: 'FILE_UPLOAD', video_size: media.buffer.length, chunk_size: layout.chunkSize, total_chunk_count: layout.totalChunkCount },
       })
       if (!initialized.publish_id || !initialized.upload_url) throw new ApiError(400, 'TikTok did not return a video upload session.')
       publishId = initialized.publish_id
-      await uploadVideo(initialized.upload_url, media.buffer, media.contentType)
+      await uploadVideo(initialized.upload_url, media.buffer, media.contentType, layout)
     } else {
       // TikTok photos support PULL_FROM_URL only. The signed LionPost URL is
       // fetched by TikTok after initialization; no unverified Supabase URL is
@@ -349,7 +399,7 @@ export async function publishTikTok(request: ApiRequest) {
       publishId = initialized.publish_id
     }
     const published = await waitForPublish(publishId, accessToken, String(info.creator_username || account.handle || ''), mediaType as 'image' | 'video')
-    const result: PublishResult = { accountId, platform: 'TikTok', status: 'sent', ...published, publishedAt: new Date().toISOString() }
+    const result: PublishResult = { accountId, platform: 'TikTok', status: 'sent', delivery: 'published', ...published, publishedAt: new Date().toISOString() }
     return { results: [result] }
   } catch (error) {
     const result: PublishResult = { accountId, platform: 'TikTok', status: 'failed', error: error instanceof Error ? error.message : 'TikTok publishing failed.' }

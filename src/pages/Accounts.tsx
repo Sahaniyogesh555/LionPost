@@ -24,7 +24,7 @@ const connectionMessages: Record<string, string> = {
   x: 'X account connected. You can publish text posts to it now.',
   instagram: 'Instagram account connected. You can publish photos and Reels now.',
   facebook: 'Facebook Page connected. You can publish text, photos, and MP4 videos now.',
-  tiktok: 'TikTok account connected. Review the live privacy options before publishing.',
+  tiktok: 'TikTok account connected. Choose Direct Post or inbox draft when publishing.',
   youtube: 'YouTube channel connected. You can upload videos now.',
   pinterest: 'Pinterest account connected. Choose a board and publish image Pins now.',
 }

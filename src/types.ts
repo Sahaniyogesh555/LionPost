@@ -13,6 +13,7 @@ export interface PublishResult {
   externalId?: string
   url?: string
   publishedAt?: string
+  delivery?: 'published' | 'provider_draft'
   warning?: string
   error?: string
 }
