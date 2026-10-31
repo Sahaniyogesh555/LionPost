@@ -37,9 +37,26 @@ function tiktokConfig() {
   return { clientKey, clientSecret, redirectUri: redirectUri('tiktok') }
 }
 
+function urlOwnershipError() {
+  return new ApiError(400, 'TikTok has not verified the LionPost photo URL. In TikTok for Developers, open the LionPost app in Production mode → URL properties → Verify properties → URL prefix, and verify https://lionpost.vercel.app/. The existing signature file is already hosted at that prefix. Then retry the photo; reconnecting TikTok is not necessary.')
+}
+
+function isUrlOwnershipError(error: unknown) {
+  return error instanceof Error && /url_ownership_unverified|URL ownership verification rules/i.test(error.message)
+}
+
 async function tiktokRequest<T>(url: string, init: RequestInit = {}, timeoutMs?: number) {
-  const body = await providerRequest<TikTokEnvelope<T>>('TikTok', url, init, { timeoutMs })
+  let body: TikTokEnvelope<T>
+  try {
+    body = await providerRequest<TikTokEnvelope<T>>('TikTok', url, init, { timeoutMs })
+  } catch (error) {
+    // TikTok can return url_ownership_unverified as HTTP 403, which the
+    // shared HTTP client rejects before a JSON envelope can be inspected.
+    if (isUrlOwnershipError(error)) throw urlOwnershipError()
+    throw error
+  }
   if (body.error?.code && body.error.code !== 'ok') {
+    if (body.error.code === 'url_ownership_unverified') throw urlOwnershipError()
     if (body.error.code === 'unaudited_client_can_only_post_to_private_accounts') throw new ApiError(400, 'TikTok requires the creator account itself to be private for unaudited Direct Post. In the TikTok app, enable Profile → Menu → Settings and privacy → Privacy → Private account, then retry with Only me. Reconnecting is not necessary.')
     if (body.error.code === 'spam_risk_too_many_pending_share') throw new ApiError(400, 'TikTok already has too many unfinished inbox drafts. Open TikTok and complete the pending drafts before uploading another one.')
     if (['spam_risk_too_many_posts', 'reached_active_user_cap'].includes(body.error.code)) throw new ApiError(400, 'TikTok says this creator cannot make more posts right now. Try again later.')
