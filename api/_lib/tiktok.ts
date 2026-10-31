@@ -28,6 +28,11 @@ interface TikTokCreatorInfo {
   stitch_disabled?: boolean
   max_video_post_duration_sec?: number
 }
+interface TikTokPublishStatus {
+  status?: string
+  fail_reason?: string
+  publicaly_available_post_id?: (string | number)[]
+}
 interface MediaGrant { userId: string; path: string; expiresAt: number }
 
 function tiktokConfig() {
@@ -281,7 +286,8 @@ export function tiktokVideoUploadLayout(videoSize: number) {
 async function uploadVideo(uploadUrl: string, buffer: Buffer, contentType: string, layout: { chunkSize: number; totalChunkCount: number }) {
   for (let index = 0; index < layout.totalChunkCount; index += 1) {
     const offset = index * layout.chunkSize
-    const end = index === layout.totalChunkCount - 1 ? buffer.length : offset + layout.chunkSize
+    const isFinalChunk = index === layout.totalChunkCount - 1
+    const end = isFinalChunk ? buffer.length : offset + layout.chunkSize
     const chunk = buffer.subarray(offset, end)
     const response = await providerFetch('TikTok upload', uploadUrl, {
       method: 'PUT',
@@ -289,13 +295,41 @@ async function uploadVideo(uploadUrl: string, buffer: Buffer, contentType: strin
       body: new Uint8Array(chunk),
     }, 180_000)
     await response.arrayBuffer()
+    // TikTok documents 206 for an accepted intermediate chunk and 201 only
+    // when every byte has been received. Other 2xx responses are not proof
+    // that the upload completed or that processing will begin.
+    const expectedStatus = isFinalChunk ? 201 : 206
+    if (response.status !== expectedStatus) throw new ApiError(400, `TikTok did not confirm the complete video upload (expected HTTP ${expectedStatus}, received HTTP ${response.status}). Processing or delivery is not confirmed; check TikTok before retrying so you do not create a duplicate.`)
   }
+}
+
+function readPublishStatus(publishId: string, accessToken: string) {
+  return bearerRequest<TikTokPublishStatus>('/v2/post/publish/status/fetch/', accessToken, { publish_id: publishId })
+}
+
+function processingFailure(reason: unknown) {
+  const code = String(reason || '').slice(0, 120)
+  const guidance: Record<string, string> = {
+    file_format_check_failed: 'The media format was rejected. Use a standard MP4/H.264 video or JPEG photo.',
+    duration_check_failed: 'The video duration is outside TikTok’s allowed range for this creator.',
+    frame_rate_check_failed: 'The video frame rate is not supported. Re-encode it at a standard frame rate.',
+    picture_size_check_failed: 'The photo or video dimensions are outside TikTok’s allowed range.',
+    video_pull_failed: 'TikTok could not download the video from the supplied URL.',
+    photo_pull_failed: 'TikTok could not download the photo from LionPost’s signed media URL.',
+    auth_removed: 'The creator removed LionPost’s TikTok access. Reconnect before creating another post.',
+    spam_risk_too_many_posts: 'This creator has reached TikTok’s current posting limit. Try again later.',
+    spam_risk_user_banned_from_posting: 'TikTok says this creator is currently banned from posting.',
+    spam_risk_text: 'TikTok rejected the description during its safety checks.',
+    spam_risk: 'TikTok stopped the upload during its safety checks.',
+    internal: 'TikTok reported a temporary internal processing failure.',
+  }
+  return `TikTok processing failed${code ? ` [${code}]` : ''}${code ? `: ${guidance[code] || 'Open TikTok for details and check the content before trying again.'}` : '.'}`
 }
 
 async function waitForPublish(publishId: string, accessToken: string, handle: string, mediaType: 'image' | 'video'): Promise<{ externalId: string; url?: string; warning?: string }> {
   const deadline = Date.now() + 180 * 1000
   while (Date.now() < deadline) {
-    const status = await bearerRequest<{ status?: string; fail_reason?: string; publicaly_available_post_id?: (string | number)[] }>('/v2/post/publish/status/fetch/', accessToken, { publish_id: publishId })
+    const status = await readPublishStatus(publishId, accessToken)
     if (status.status === 'PUBLISH_COMPLETE') {
       const publicId = status.publicaly_available_post_id?.[0]
       return {
@@ -304,11 +338,48 @@ async function waitForPublish(publishId: string, accessToken: string, handle: st
         warning: publicId ? undefined : 'TikTok completed the post. Private or unmoderated posts do not return a public post URL.',
       }
     }
-    if (status.status === 'FAILED') throw new ApiError(400, `TikTok publishing failed${status.fail_reason ? `: ${status.fail_reason}` : '.'}`)
+    if (status.status === 'FAILED') throw new ApiError(400, processingFailure(status.fail_reason))
     if (!['PROCESSING_UPLOAD', 'PROCESSING_DOWNLOAD'].includes(String(status.status))) throw new ApiError(400, `TikTok returned an unexpected publishing status: ${status.status || 'unknown'}`)
     await sleep(3000)
   }
   throw new ApiError(400, 'TikTok is still processing this post. Check TikTok before retrying so you do not create a duplicate.')
+}
+
+async function waitForInbox(publishId: string, accessToken: string): Promise<{ state: 'inbox' | 'published' | 'pending'; warning?: string }> {
+  const deadline = Date.now() + 120 * 1000
+  while (Date.now() < deadline) {
+    let status: TikTokPublishStatus
+    try {
+      status = await readPublishStatus(publishId, accessToken)
+    } catch (error) {
+      const detail = error instanceof Error ? ` (${error.message})` : ''
+      return { state: 'pending', warning: `TikTok accepted the upload, but LionPost could not confirm its processing status${detail}. Open Posts → Check TikTok status before retrying.` }
+    }
+    // Only this provider status proves that TikTok sent the creator an inbox
+    // notification. A successful init or final PUT alone is not a handoff.
+    if (status.status === 'SEND_TO_USER_INBOX') return { state: 'inbox' }
+    if (status.status === 'PUBLISH_COMPLETE') return { state: 'published' }
+    if (status.status === 'FAILED') throw new ApiError(400, processingFailure(status.fail_reason))
+    if (!['PROCESSING_UPLOAD', 'PROCESSING_DOWNLOAD'].includes(String(status.status))) return { state: 'pending', warning: `TikTok returned ${status.status || 'an unknown status'} instead of confirming inbox delivery. Open Posts → Check TikTok status before retrying.` }
+    await sleep(3000)
+  }
+  return { state: 'pending', warning: 'TikTok accepted the upload but is still processing it. Inbox delivery is not confirmed. Open Posts → Check TikTok status before retrying so you do not create a duplicate.' }
+}
+
+export async function tiktokPublicationStatus(request: ApiRequest) {
+  const { user, client } = await requireUser(request)
+  const input = record(request.body)
+  const accountId = String(input.accountId || '')
+  const publishId = String(input.publishId || '')
+  if (!accountId || !publishId || publishId.length > 128) throw new ApiError(400, 'A valid TikTok account and publishing ID are required.')
+  await ownedAccounts(user.id, client, 'TikTok', 'tiktok', [accountId])
+  const accessToken = await accessTokenFor(user.id, accountId)
+  const status = await readPublishStatus(publishId, accessToken)
+  return {
+    status: String(status.status || 'UNKNOWN'),
+    failReason: String(status.fail_reason || ''),
+    message: status.status === 'FAILED' ? processingFailure(status.fail_reason) : '',
+  }
 }
 
 export async function publishTikTok(request: ApiRequest) {
@@ -339,6 +410,7 @@ export async function publishTikTok(request: ApiRequest) {
   const { path } = validateMediaPath(user.id, input.mediaPath, mediaType)
   const [account] = await ownedAccounts(user.id, client, 'TikTok', 'tiktok', ids)
   const accountId = String(account.id)
+  let preservedMediaPath = ''
 
   try {
     if (postMode === 'MEDIA_UPLOAD') {
@@ -366,15 +438,42 @@ export async function publishTikTok(request: ApiRequest) {
         if (!initialized.publish_id) throw new ApiError(400, 'TikTok did not return a photo draft ID. Verify the LionPost media URL/domain in TikTok URL properties and try again.')
         publishId = initialized.publish_id
       }
-      // For inbox uploads, PUBLISH_COMPLETE means the creator later finished
-      // posting inside TikTok. Do not misreport the initial upload as published.
+      const inbox = await waitForInbox(publishId, accessToken)
+      if (inbox.state === 'pending') {
+        // A photo URL must remain readable while TikTok is still downloading.
+        // The composer retains only this pending photo and cleans it after a
+        // terminal status check; uploaded video bytes no longer need storage.
+        preservedMediaPath = mediaType === 'image' ? path : ''
+        const result: PublishResult = {
+          accountId,
+          platform: 'TikTok',
+          status: 'sent',
+          delivery: 'provider_pending',
+          externalId: publishId,
+          pendingMediaPath: preservedMediaPath || undefined,
+          warning: inbox.warning,
+        }
+        return { results: [result] }
+      }
+      if (inbox.state === 'published') {
+        const result: PublishResult = {
+          accountId,
+          platform: 'TikTok',
+          status: 'sent',
+          delivery: 'published',
+          externalId: publishId,
+          publishedAt: new Date().toISOString(),
+          warning: 'TikTok confirms that the creator already reviewed and published this upload through TikTok’s editing flow.',
+        }
+        return { results: [result] }
+      }
       const result: PublishResult = {
         accountId,
         platform: 'TikTok',
         status: 'sent',
         delivery: 'provider_draft',
         externalId: publishId,
-        warning: 'TikTok received the draft upload. Open its inbox notification when it arrives to review, edit, and publish; this step did not post to the profile.',
+        warning: 'TikTok confirmed that the draft notification was sent to the creator’s inbox. Open TikTok → Inbox → System notifications to review, edit, and publish; this step did not post to the profile.',
       }
       return { results: [result] }
     }
@@ -424,7 +523,7 @@ export async function publishTikTok(request: ApiRequest) {
     const result: PublishResult = { accountId, platform: 'TikTok', status: 'failed', error: error instanceof Error ? error.message : 'TikTok publishing failed.' }
     return { results: [result] }
   } finally {
-    if (input.cleanupMedia !== false) await bestEffortMediaCleanup(user.id, input.mediaPath)
+    if (!preservedMediaPath && input.cleanupMedia !== false) await bestEffortMediaCleanup(user.id, input.mediaPath)
   }
 }
 

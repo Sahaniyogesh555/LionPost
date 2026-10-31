@@ -215,6 +215,7 @@ export default function NewPost() {
       setPublishing(true)
       const results: PublishResult[] = []
       let mediaPath = ''
+      let preserveMedia = false
       try {
         if (mediaFile && (instagramAccounts.length || remoteGroups.some(([, group]) => group.length))) {
           try {
@@ -279,13 +280,16 @@ export default function NewPost() {
         }
         const failed = results.filter((result) => result.status === 'failed').length
         const providerDrafts = results.filter((result) => result.status === 'sent' && result.delivery === 'provider_draft').length
+        const providerPending = results.filter((result) => result.status === 'sent' && result.delivery === 'provider_pending').length
+        preserveMedia = results.some((result) => result.pendingMediaPath === mediaPath)
         addPost({ text: text.trim(), platforms: chosenAccounts.map((account) => account.platform), status: failed ? 'failed' : 'sent', image: mediaType === 'image' ? media || undefined : undefined, publishResults: results })
         if (failed) notify(`${results.length - failed} succeeded; ${failed} failed. Open Posts for the provider errors and next steps.`, 'error')
+        else if (providerPending) notify('TikTok accepted the upload but has not confirmed inbox delivery. Open Posts → Check TikTok status before retrying.', 'info')
         else if (providerDrafts) notify(`${results.length} ${results.length === 1 ? 'destination' : 'destinations'} completed. Open the TikTok inbox notification to finish each draft post.`, 'success')
         else notify(`Published to ${results.length} ${results.length === 1 ? 'account' : 'accounts'}.`, 'success')
         navigate('/app/posts')
       } finally {
-        if (mediaPath) {
+        if (mediaPath && !preserveMedia) {
           try { await cleanupPostMedia(session.access_token, mediaPath) } catch { /* Provider results are already determined; cleanup is best effort. */ }
         }
         setPublishing(false)

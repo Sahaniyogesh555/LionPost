@@ -33,6 +33,12 @@ export interface TikTokOptions {
   maxVideoPostDurationSec?: number
 }
 
+export interface TikTokPublicationStatus {
+  status: 'PROCESSING_UPLOAD' | 'PROCESSING_DOWNLOAD' | 'SEND_TO_USER_INBOX' | 'PUBLISH_COMPLETE' | 'FAILED' | 'UNKNOWN' | string
+  failReason: string
+  message: string
+}
+
 export interface PinterestBoardOption { id: string; name: string; privacy: string }
 
 const providerNames: Record<RemoteProvider, string> = { facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube', pinterest: 'Pinterest', dailymotion: 'Dailymotion' }
@@ -63,6 +69,10 @@ export function disconnectProviderAccount(provider: RemoteProvider, accessToken:
 
 export function getTikTokOptions(accessToken: string, accountId: string) {
   return request<TikTokOptions>('tiktok', 'options', accessToken, { accountId })
+}
+
+export function getTikTokPublicationStatus(accessToken: string, accountId: string, publishId: string) {
+  return request<TikTokPublicationStatus>('tiktok', 'status', accessToken, { accountId, publishId })
 }
 
 export function getPinterestBoards(accessToken: string, accountId: string) {

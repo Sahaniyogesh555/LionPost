@@ -104,7 +104,7 @@ export function PrivacyPolicy() {
 
     <LegalSection id="retention" title="7. Retention and deletion">
       <p>Account and workspace records are retained while your account is active and until you delete the relevant content or your account. Encrypted connection credentials are retained while the connection is active and are deleted when you disconnect that account or delete your LionPost account.</p>
-      <p>Temporary publishing uploads are removed on a best-effort basis after the selected publishing attempts finish. Signed media URLs expire automatically; saved drafts, post images and publishing history remain subject to the workspace retention described above.</p>
+      <p>Temporary publishing uploads are removed on a best-effort basis after the selected publishing attempts finish. If TikTok is still downloading a photo, its owner-scoped temporary object can remain until a terminal status check so the transfer can complete. Signed media URLs expire automatically; saved drafts, post images and publishing history remain subject to the workspace retention described above.</p>
       <p>Deleting a LionPost connection or account does not delete content already published on Blogger, Telegram or another third-party platform. You can manage that published content through the destination platform. Provider backups and security logs may take additional time to expire under the provider’s retention practices.</p>
     </LegalSection>
 

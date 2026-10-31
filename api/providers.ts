@@ -1,7 +1,7 @@
 import { ApiError, requireUser, respond, type ApiRequest, type ApiResponse } from './_lib/server.js'
 import { readTemporaryMedia, record, removeTemporaryMedia } from './_lib/provider-utils.js'
 import { beginFacebook, completeFacebook, disconnectFacebook, publishFacebook } from './_lib/facebook.js'
-import { beginTikTok, completeTikTok, disconnectTikTok, publishTikTok, readTikTokMediaGrant, tiktokOptions } from './_lib/tiktok.js'
+import { beginTikTok, completeTikTok, disconnectTikTok, publishTikTok, readTikTokMediaGrant, tiktokOptions, tiktokPublicationStatus } from './_lib/tiktok.js'
 import { beginYouTube, completeYouTube, disconnectYouTube, publishYouTube } from './_lib/youtube.js'
 import { beginPinterest, completePinterest, disconnectPinterest, pinterestOptions, publishPinterest } from './_lib/pinterest.js'
 import { connectDailymotion, disconnectDailymotion, publishDailymotion } from './_lib/dailymotion.js'
@@ -17,7 +17,7 @@ const callbacks: Record<string, (request: ApiRequest) => Promise<string>> = {
 
 const operations: Record<string, Record<string, (request: ApiRequest) => Promise<unknown>>> = {
   facebook: { connect: beginFacebook, publish: publishFacebook, disconnect: disconnectFacebook },
-  tiktok: { connect: beginTikTok, publish: publishTikTok, options: tiktokOptions, disconnect: disconnectTikTok },
+  tiktok: { connect: beginTikTok, publish: publishTikTok, options: tiktokOptions, status: tiktokPublicationStatus, disconnect: disconnectTikTok },
   youtube: { connect: beginYouTube, publish: publishYouTube, disconnect: disconnectYouTube },
   pinterest: { connect: beginPinterest, publish: publishPinterest, options: pinterestOptions, disconnect: disconnectPinterest },
   dailymotion: { connect: connectDailymotion, publish: publishDailymotion, disconnect: disconnectDailymotion },

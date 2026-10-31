@@ -13,7 +13,9 @@ export interface PublishResult {
   externalId?: string
   url?: string
   publishedAt?: string
-  delivery?: 'published' | 'provider_draft'
+  delivery?: 'published' | 'provider_draft' | 'provider_pending'
+  // Owner-scoped temporary photo retained only while TikTok is downloading it.
+  pendingMediaPath?: string
   warning?: string
   error?: string
 }
