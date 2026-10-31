@@ -504,6 +504,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid rgba(255, 194, 20, .5
 .account-platform-copy h3 { font-size: 14px; margin: 0 0 4px; }
 .account-platform-copy p { font-size: 9px; line-height: 1.35; margin: 0; }
 .account-platform-card > .button { position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%); }
+.account-platform-card > .button.button-primary:hover:not(:disabled) { transform: translate(-50%, -1px); }
+.account-platform-card > .button.button-primary:active:not(:disabled) { transform: translate(-50%, 2px); }
 .platform-card-facebook { border-bottom-color: #4a97e9; }
 .platform-card-instagram { border-bottom-color: #e66d9c; }
 .platform-card-x { border-bottom-color: #4c4c48; }
