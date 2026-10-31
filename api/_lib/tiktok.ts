@@ -40,9 +40,11 @@ function tiktokConfig() {
 async function tiktokRequest<T>(url: string, init: RequestInit = {}, timeoutMs?: number) {
   const body = await providerRequest<TikTokEnvelope<T>>('TikTok', url, init, { timeoutMs })
   if (body.error?.code && body.error.code !== 'ok') {
+    if (body.error.code === 'unaudited_client_can_only_post_to_private_accounts') throw new ApiError(400, 'TikTok requires the creator account itself to be private for unaudited Direct Post. In the TikTok app, enable Profile → Menu → Settings and privacy → Privacy → Private account, then retry with Only me. Reconnecting is not necessary.')
+    if (body.error.code === 'spam_risk_too_many_pending_share') throw new ApiError(400, 'TikTok already has too many unfinished inbox drafts. Open TikTok and complete the pending drafts before uploading another one.')
     if (['spam_risk_too_many_posts', 'reached_active_user_cap'].includes(body.error.code)) throw new ApiError(400, 'TikTok says this creator cannot make more posts right now. Try again later.')
     if (body.error.code === 'spam_risk_user_banned_from_posting') throw new ApiError(400, 'TikTok says this creator is currently banned from making new posts.')
-    throw new ApiError(400, `TikTok could not complete the request: ${body.error.message || body.error.code}`)
+    throw new ApiError(400, `TikTok could not complete the request [${body.error.code}]: ${body.error.message || 'No provider detail was returned.'}`)
   }
   if (!body.data) throw new ApiError(400, 'TikTok returned incomplete data.')
   return body.data
